@@ -6,13 +6,25 @@ This package implements the methods for providing sufficient representations of 
 To install this package in R, run the following commands:
 ```R
 library(devtools)
-install_github(gsbDBI/levels)
+install_github(gsbDBI/sufrep)
 ```
 
 Example usage:
 ```
-library(levels)
+library(sufrep)
 
+n = 5000
+p = 20
+
+X <- matrix(rnorm(n*p),n,p)
+G <- sample(5,size=n,replace=TRUE)
+df <- data.frame(cbind(X,G))
+
+enc <- encoder(X=df,G="G",method = "one_hot")
+
+train.df <- enc(df)
+
+head(train.df)
 
 ```
 
