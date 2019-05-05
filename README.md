@@ -23,9 +23,7 @@ df <- data.frame(cbind(X,G))
 enc <- encoder(X=df,G="G",method = "one_hot")
 
 train.df <- enc(df)
-
-head(train.df)
-
+print(head(train.df))
 ```
 
 #### References
