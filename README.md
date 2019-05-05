@@ -10,7 +10,7 @@ install_github(gsbDBI/sufrep)
 ```
 
 Example usage:
-```
+```R
 library(sufrep)
 
 n = 5000
