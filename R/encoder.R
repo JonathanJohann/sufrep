@@ -10,16 +10,28 @@ one_hot_encode <- function(k){
 }
 
 helmert_encode <- function(X,G,k){
-  CM <- stats::model.matrix(~G,data=X,contrasts = list(G = "contr.helmert"))
-  CM <- CM[,-1] #Drop the intercept term
-  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
+  #It won't be happy unless you provide A in both ~ arg and list arg. But 
+  #X[,G] <- as.factor(X[,G])
+  #CM <- stats::model.matrix(~ G,data=X,contrasts = list(G = "contr.helmert"))
+  #CM <- CM[,-1] #Drop the intercept term
+  #colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
+  CM <- matrix(0, nrow = k, ncol = k)
+  CM <- matrix(-1/(k - col(CM) + 1), nrow = k, ncol = k)
+  CM[upper.tri(CM)] <- 0
+  CM <- CM + diag(k)
+  CM <- CM[, 1:(k - 1)]
+  colnames(CM) <- paste("E", 1:(k-1), sep = "")
   return(CM)
 }
 
 deviation_encode <- function(X,G,k){
-  CM <- stats::model.matrix(~G,data=X,contrasts = list(G = "contr.sum"))
-  CM <- CM[,-1] #Drop the intercept term
-  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
+  #CM <- stats::model.matrix(~G,data=X,contrasts = list(G = "contr.sum"))
+  #CM <- CM[,-1] #Drop the intercept term
+  #colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
+  CM <- diag(k)
+  CM[k, ] <- CM[k, ] - 1
+  CM <- CM[, 1:(k - 1)]
+  colnames(CM) <- paste("E", 1:(k-1), sep = "")
   return(CM)
 }
 
@@ -85,21 +97,24 @@ low_rank_encode <- function(X,G,num_components){
   np <- min(num_components,dim(decomp$u)[2])
   CM <- data.frame(decomp$u[,1:np])
   colnames(CM) <- paste("E",1:np,sep="")
+  return(CM)a
 }
 
 sparse_low_rank_encode <- function(X,G,num_components){
 
   CM <- means_encode(X,G)
-  decomp <- tryCatch({sparsepca::spca(CM)},
+  decomp <- tryCatch({sparsepca::spca(CM,verbose=FALSE)},
                      error=function(e){
                        return(sparsepca::spca(CM[,colSums(!is.finite(CM))==0]))
                      })
   np <- min(num_components,dim(decomp$loadings)[2])
   U <- decomp$loadings[,1:np]
+  CM <- as.matrix(CM)
   CM <- tryCatch({CM %*% U},
                  error=function(e) {
-                   return(CM[,colSums(!is.finite(M))==0] %*% U)
+                   return(CM[,colSums(!is.finite(CM))==0] %*% U)
                  })
+  CM <- data.frame(CM)
   colnames(CM) <- paste("E",1:np,sep="")
   return(CM)
 }
