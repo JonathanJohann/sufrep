@@ -1,3 +1,35 @@
+
+
+
+#' @export
+evaluate <- function(train,test,
+                     categorical,response,
+                     method="one_hot",
+                     model = "regression_forest",...){
+  
+  remove_response <- which(colnames(train) %in% c(response))
+  
+  if(method=="fisher"){
+    train.X <- train
+  } else {
+    train.X <- train[,-remove_response]
+  }
+
+  
+  enc <- encoder(train.X,G=categorical,method=method,...)
+  train <- enc(train)
+  test <- enc(test)
+  
+  return(ifelse(model=="regression_forest",
+                get_forest_mse(train,test),
+                get_xgboost_mse(train,test)))
+}
+
+
+
+
+
+
 #' @export
 get_noise_scale <- function(noiseless, snr) {
   sqrt(var(noiseless)/snr)
@@ -149,45 +181,3 @@ fix_factors <- function(x) {
   return(as.numeric(as.character(x)))
 }
 
-
-get_eval <- function(setup,dataset,group,num.trees,num.threads,method = "one hot", model="regression_forest"){
-  n <- nrow(dataset$TRAIN)
-  df <- rbind(dataset$TRAIN,dataset$TEST)
-  
-}
-
-
-#' @export
-get_mse <- function(setup, dataset, group, num.trees, num.threads, model = "regression_forest") {
-  
-  n <- nrow(dataset$TRAIN)
-  df <- rbind(dataset$TRAIN, dataset$TEST)
-  
-  df <- switch(setup, 
-               permutation = df %>% dplyr::mutate_at(group, funs(fix_factors)), 
-               one_hot = basic_encoding(df,type="one hot"), 
-               means = means_encoding(dataset$TRAIN,dataset$TEST, group), 
-               svd_method = svd_encoding(dataset$TRAIN,dataset$TEST,predicted="Y",group,cov_only = FALSE,model=model),
-               spca_method = spca_encoding(dataset$TRAIN,dataset$TEST,predicted="Y",group,cov_only=FALSE,model=model),
-               fisher = add_homogeneous(dataset$TRAIN, dataset$TEST, group), 
-               multiple_permutation = multiple_permutations(df,group),
-               deviation = basic_encoding(df,group,type="deviation"),
-               difference = basic_encoding(df,group,type="difference"),
-               helmert = basic_encoding(df,group,type="helmert"),
-               repeated_effect = basic_encoding(df,group,type="repeated effect"),
-               pax_weight = pax_weight_coding(dataset$TRAIN,dataset$TEST, group))
-  
-  df <- df[, !sapply(df, class) %in% c("character", "factor")]
-  
-  train = df[1:nrow(df)/2, ]
-  test = df[(nrow(df)/2 + 1):nrow(df), ]
-  
-  
-  
-  if (model == "regression_forest") {
-    mse <- get_forest_mse(train = train, test = test, num.trees = num.trees, num.threads = num.threads, tune.parameters = FALSE)
-  } else {
-    mse <- get_xgboost_mse(train = train, test = test)
-  }
-  return(mse)
-}

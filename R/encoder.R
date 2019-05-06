@@ -12,14 +12,14 @@ one_hot_encode <- function(k){
 helmert_encode <- function(X,G,k){
   CM <- stats::model.matrix(~G,data=X,contrasts = list(G = "contr.helmert"))
   CM <- CM[,-1] #Drop the intercept term
-  colnames(CM) <- paste("E", 1:k, sep = "")
+  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
   return(CM)
 }
 
 deviation_encode <- function(X,G,k){
   CM <- stats::model.matrix(~G,data=X,contrasts = list(G = "contr.sum"))
   CM <- CM[,-1] #Drop the intercept term
-  colnames(CM) <- paste("E", 1:k, sep = "")
+  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
   return(CM)
 }
 
@@ -32,7 +32,7 @@ repeated_effect_encode <- function(k){
   diag(BH) <- 0
   CM <- TH + BH
   CM <- CM[, 1:(k - 1)]
-  colnames(CM) <- paste("E", 1:k, sep = "")
+  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
   return(CM)
 }
 
@@ -42,7 +42,7 @@ difference_encode <- function(k){
   CM[lower.tri(CM)] <- 0
   CM <- CM[, 1:(k - 1)]
   CM[row(CM) == (col(CM) + 1)] <- -apply(CM, 2, sum)
-  colnames(CM) <- paste("E", 1:k, sep = "")
+  colnames(CM) <- paste("E", 1:(k-1), sep = "")
   return(CM)
 }
 
@@ -50,32 +50,33 @@ simple_effect_encode <- function(k){
   CM <- matrix(-1/k, nrow = k, ncol = k)
   CM <- CM + diag(k)
   CM <- CM[, 1:(k - 1)]
-  colnames(CM) <- paste("E", 1:k, sep = "")
+  colnames(CM) <- paste("E", 1:(k-1), sep = "")
   return(CM)
 }
 
 fisher_encode <- function(X,G,Y){
-  
+
   CM <- aggregate(X[,Y],list(X[,G]),mean)
   colnames(CM) <- c("label","X1")
   CM$X1 <- rank(CM$X1)
   ordering <- data.frame(unique(X[,G]))
   colnames(ordering) <- "ORD"
   CM <- CM[order(ordering$ORD),]
-  #colnames(CM) <- paste("E1", sep = "")
-  return(CM$X1)
+  CM <- data.frame(CM$X1)
+  colnames(CM) <- paste("E1", sep = "")
+  return(CM)
 }
 
 means_encode <- function(X,G){
-  
+
   CM <- aggregate(X,list(X[,G]),mean)
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
-  ordering <- 
+  ordering <-
   return(CM)
 }
 
 low_rank_encode <- function(X,G,num_components){
-  
+
   CM <- means_encode(X,G)
   decomp <- tryCatch({svd(CM)},
                      error=function(e){
@@ -87,7 +88,7 @@ low_rank_encode <- function(X,G,num_components){
 }
 
 sparse_low_rank_encode <- function(X,G,num_components){
-  
+
   CM <- means_encode(X,G)
   decomp <- tryCatch({sparsepca::spca(CM)},
                      error=function(e){
@@ -104,19 +105,20 @@ sparse_low_rank_encode <- function(X,G,num_components){
 }
 
 mnl_encode <- function(X,G){
-  
+
   categorical_names <- which(colnames(X) %in% c(G))
   Y_mnl <- as.matrix(X[,categorical_names])
   X_mnl <- as.matrix(X[,-categorical_names])
-  
+
 }
 
-#' @export 
+#' @export
 encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, method = "one_hot",...) {
-    
+
     id <- data.frame(unique(X[, G]))
+    colnames(id) <- "G"
     k <- dim(id)[1]
-    
+
     CM <- switch(method,
                  one_hot = one_hot_encode(k),
                  helmert = helmert_encode(X,G,k),
@@ -129,14 +131,26 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
                  low_rank = low_rank_encode(X,G,num_components),
                  sparse_low_rank = sparse_low_rank_encode(X,G,num_components),
                  MNL = mnl_encode(X,G))
-  
-    map <- cbind(id, CM)
-    
-    
-    f <- function(X, drop = TRUE) {
-        X <- merge(x = X, y = map, by = G)
+
+    map <- data.frame(cbind(id, CM))
+
+
+    f <- function(X) {
+        X_enc <- map[X[,G],]
+        rownames(X_enc) <- NULL
+        X <- cbind(X,X_enc)
         X <- X[,-which(colnames(X) %in% c(G))]
+        return(X)
     }
-    
+
     return(f)
 }
+  
+  
+  
+  
+  
+  
+  
+  
+  
