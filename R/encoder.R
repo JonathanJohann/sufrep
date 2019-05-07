@@ -97,7 +97,7 @@ low_rank_encode <- function(X,G,num_components){
   np <- min(num_components,dim(decomp$u)[2])
   CM <- data.frame(decomp$u[,1:np])
   colnames(CM) <- paste("E",1:np,sep="")
-  return(CM)a
+  return(CM)
 }
 
 sparse_low_rank_encode <- function(X,G,num_components){
@@ -119,12 +119,46 @@ sparse_low_rank_encode <- function(X,G,num_components){
   return(CM)
 }
 
-mnl_encode <- function(X,G){
+
+permutation_encode <- function(k,num_permutations=1){
+  set.seed(time_seed())
+  CM <- data.frame(E1 = sample(k,size=k,replace=FALSE))
+  if(num_permutations>1){
+    mm <- time_seed()
+    for(i in 2:num_permutations){
+      set.seed(time_seed()*i %% mm)
+      CM <- cbind(CM,data.frame(sample(k,size=k,replace=FALSE)))
+    }
+  }
+  colnames(CM) <- paste("E",1:num_permutations,sep="")
+  return(CM)
+}
+
+mnl_encode <- function(X,G,k){
 
   categorical_names <- which(colnames(X) %in% c(G))
-  Y_mnl <- as.matrix(X[,categorical_names])
-  X_mnl <- as.matrix(X[,-categorical_names])
-
+  train.Y <- as.matrix(X[,categorical_names])
+  train.X <- as.matrix(X[,-categorical_names])
+  fit <- tryCatch({
+    cv.glmnet(x=train.X,y=train.Y,nfolds=4,family="multinomial")
+  },error=function(e){
+    redundant.Y <- rbind(train.Y,train.Y,train.Y)
+    redundant.X <- rbind(train.X,train.X,train.X)
+    return(cv.glmnet(x=redundant.X,y=redundant.Y,nfolds=4,family="multinomial"))
+    
+  })
+  coef_vals <- coef(fit,s="lambda.1se")
+  CM <- c()
+  classes <- names(coef_vals)
+  
+  for(i in 1:k){
+    tmp <- as.data.frame(as.matrix(t(coef_vals[[i]])))
+    CM <- rbind(CM,tmp)
+  }
+  
+  CM <- CM[,-1]
+  colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
+  return(CM)
 }
 
 #' @export
@@ -145,7 +179,9 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
                  means = means_encode(X,G),
                  low_rank = low_rank_encode(X,G,num_components),
                  sparse_low_rank = sparse_low_rank_encode(X,G,num_components),
-                 MNL = mnl_encode(X,G))
+                 permutation = permutation_encode(k,num_permutations=1),
+                 multi_permutation = permutation_encode(k,num_permutations = (dim(X)[2]-1)),
+                 MNL = mnl_encode(X,G,k))
 
     map <- data.frame(cbind(id, CM))
 
