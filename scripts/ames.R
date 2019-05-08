@@ -5,6 +5,7 @@ library(here)
 library(caret)
 library(glmnet)
 library(xgboost)
+library(sufrep)
 ames_file <- "C:\\Users\\jonat\\Desktop\\levels\\datasets\\ames.csv"#here::here("Datasets", "ames.csv")
 
 ames <- readr::read_csv(ames_file)
