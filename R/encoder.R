@@ -87,26 +87,116 @@ means_encode <- function(X,G){
   return(CM)
 }
 
-low_rank_encode <- function(X,G,num_components){
+low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,10,15),cross_validate=TRUE,model="regression_forest"){
 
+  if((cross_validate==TRUE)|(is.null(num_components))){
+    mses <- c()
+    randomized_df <- X[sample(nrow(X)), ]
+    rownames(randomized_df) <- NULL
+    fold_cat <- category_stratify(randomized_df[,G],num_folds=folds)
+    for(i in 1:length(cv_vals)){
+      mse <- c()
+      print(paste("--CV FOLD--",i,sep=""))
+      for(j in 1:folds){
+        testIndexes <- fold_cat[[j]]
+        testData <- randomized_df[testIndexes, ]
+        trainData <- randomized_df[-testIndexes, ]
+        id <- data.frame(unique(trainData[, G]))
+        colnames(id) <- G
+        k <- dim(id)[1]
+        train.X2 <- trainData[,-which(colnames(trainData) %in% c(Y))]
+        CM <- low_rank_encode(train.X2,G=G,num_components=cv_vals[i],cross_validate=FALSE,model=model)
+        
+        map <- data.frame(cbind(id, CM))
+        
+        
+        enc <- function(X) {
+          
+          X_enc <- map[X[,G],]
+          rownames(X_enc) <- NULL
+          X <- cbind(X,X_enc)
+          X <- X[,-which(colnames(X) %in% c(G))]
+          return(X)
+        }
+        trainData <- enc(trainData)
+        testData <- enc(testData)
+        if(model=="regression_forest"){
+          print(dim(trainData))
+          print(dim(testData))
+          mse <- c(mse,get_forest_mse(trainData,testData))
+        }
+        else{
+          mse <- c(mse,get_xgboost_mse(trainData,testData))
+        }
+      }
+      mses <- c(mses,mean(mse))
+    }
+    mx <- which(mses==min(mses))[1]
+    num_components <- cv_vals[mx]
+  }
   CM <- means_encode(X,G)
   decomp <- tryCatch({svd(CM)},
                      error=function(e){
                        return(svd(CM[,colSums(!is.finite(CM))==0]))
                      })
+  
   np <- min(num_components,dim(decomp$u)[2])
   CM <- data.frame(decomp$u[,1:np])
   colnames(CM) <- paste("E",1:np,sep="")
   return(CM)
 }
 
-sparse_low_rank_encode <- function(X,G,num_components){
+sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,10,15),cross_validate=TRUE,model="regression_forest"){
 
+  if((cross_validate==TRUE)|(is.null(num_components))){
+    mses <- c()
+    randomized_df <- X[sample(nrow(X)), ]
+    rownames(randomized_df) <- NULL
+    fold_cat <- category_stratify(randomized_df[,G],num_folds=folds)
+    for(i in 1:length(cv_vals)){
+      print(paste("--CV FOLD--",i,sep=""))
+      mse <- c()
+      for(j in 1:folds){
+        testIndexes <- fold_cat[[j]]
+        testData <- randomized_df[testIndexes, ]
+        trainData <- randomized_df[-testIndexes, ]
+        id <- data.frame(unique(trainData[, G]))
+        colnames(id) <- G
+        k <- dim(id)[1]
+        train.X2 <- trainData[,-which(colnames(trainData) %in% c(Y))]
+        CM <- sparse_low_rank_encode(train.X2,G=G,num_components=cv_vals[i],cross_validate=FALSE,model=model)
+        
+        map <- data.frame(cbind(id, CM))
+        
+        
+        enc <- function(X) {
+          
+          X_enc <- map[X[,G],]
+          rownames(X_enc) <- NULL
+          X <- cbind(X,X_enc)
+          X <- X[,-which(colnames(X) %in% c(G))]
+          return(X)
+        }
+        trainData <- enc(trainData)
+        testData <- enc(testData)
+        if(model=="regression_forest"){
+          mse <- c(mse,get_forest_mse(trainData,testData))
+        }
+        else{
+          mse <- c(mse,get_xgboost_mse(trainData,testData))
+        }
+      }
+      mses <- c(mses,mean(mse))
+    }
+    mx <- which(mses==min(mses))[1]
+    num_components <- cv_vals[mx]
+  }
   CM <- means_encode(X,G)
   decomp <- tryCatch({sparsepca::spca(CM,verbose=FALSE)},
                      error=function(e){
                        return(sparsepca::spca(CM[,colSums(!is.finite(CM))==0]))
                      })
+  
   np <- min(num_components,dim(decomp$loadings)[2])
   U <- decomp$loadings[,1:np]
   CM <- as.matrix(CM)
@@ -164,8 +254,9 @@ mnl_encode <- function(X,G,k){
 #' @export
 encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, method = "one_hot",...) {
 
+
     id <- data.frame(unique(X[, G]))
-    colnames(id) <- "G"
+    colnames(id) <- G
     k <- dim(id)[1]
 
     CM <- switch(method,
@@ -177,8 +268,8 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
                  simple_effect = simple_effect_encode(k),
                  fisher = fisher_encode(X,G,Y),
                  means = means_encode(X,G),
-                 low_rank = low_rank_encode(X,G,num_components),
-                 sparse_low_rank = sparse_low_rank_encode(X,G,num_components),
+                 low_rank = low_rank_encode(X,G,Y=Y,cross_validate=TRUE),
+                 sparse_low_rank = sparse_low_rank_encode(X,G,Y=Y,cross_validate=TRUE),
                  permutation = permutation_encode(k,num_permutations=1),
                  multi_permutation = permutation_encode(k,num_permutations = (dim(X)[2]-1)),
                  MNL = mnl_encode(X,G,k))
@@ -187,6 +278,7 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
 
 
     f <- function(X) {
+
         X_enc <- map[X[,G],]
         rownames(X_enc) <- NULL
         X <- cbind(X,X_enc)

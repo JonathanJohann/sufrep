@@ -9,14 +9,14 @@ evaluate <- function(train,test,
   
   remove_response <- which(colnames(train) %in% c(response))
   
-  if(method=="fisher"){
+  if(method %in% c("fisher","sparse_low_rank","low_rank")){
     train.X <- train
   } else {
     train.X <- train[,-remove_response]
   }
 
   
-  enc <- encoder(train.X,G=categorical,method=method,...)
+  enc <- encoder(X=train.X,G=categorical,method=method,...)
   train <- enc(train)
   test <- enc(test)
   
@@ -25,6 +25,52 @@ evaluate <- function(train,test,
                 get_xgboost_mse(train,test)))
 }
 
+#' @export
+evaluate_method <- function(df,categorical,response,k=10,seeds=1,model="regression_forest",stratify=TRUE){
+  output <- c()
+  seed_val <- time_seed()
+  set.seed(seed_val)
+  randomized_df <- df[sample(nrow(df)), ]
+  methods <- c("one_hot","multi_permutation","means","low_rank",
+               "sparse_low_rank","MNL","permutation","difference",
+               "deviation","repeated_effect","helmert","fisher",
+              "simple_effect")
+  for (i in 1:seeds) {
+    
+    total_indices <- 1:nrow(df)
+    
+    categ <- c(randomized_df %>% dplyr::mutate_at(categorical,as.character) 
+               %>% dplyr::mutate_at(categorical,as.numeric) 
+               %>% dplyr::select(categorical))
+    
+    fold_cat <- category_stratify(categ[[1]],num_folds=k)
+    
+    for (j in 1:k) {
+      testIndexes <- fold_cat[[j]]
+      testData <- randomized_df[testIndexes, ]
+      trainData <- randomized_df[-testIndexes, ]
+      mses <- c()
+      for (q in 1:13){
+        mse <- evaluate(method=methods[q],train=trainData,test=testData,
+                        categorical=categorical,response=response,
+                        model=model,Y=response)
+        print(mse)
+        mses <- c(mses,mse)
+        print(methods[q])
+      }
+      
+      new_row <- c(nrow(df), model, seed_val, j, mses)
+      output <- rbind(output, new_row)
+      print(paste("Done with -- ",j,sep=""))
+    }
+    colnames(output) <- c("file", "model", "seed", "fold", "one_hot", "multi_perm", 
+                          "add_means", "add_svd", "add_spca", "add_pax_weight", "perm", 
+                          "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")  
+    saveRDS(output, file = paste("Updated_Feb21_2019_", k, "_seed", i, "_", seed_val, ".rds", sep = ""))
+  }
+  return(data.frame(output))
+  
+}
 
 
 
@@ -79,48 +125,15 @@ category_stratify <- function(categories,num_folds=4){
 
 
 #' @export
-multiple_permutations <- function(df, group, nums = 4, drop = TRUE) {
-  output <- df
-  observable_groups <- df %>% 
-                            dplyr::mutate_at(group,as.character) %>% 
-                            dplyr::mutate_at(group,as.numeric) %>% 
-                            dplyr::pull(group)
-  for (i in 1:nums) {
-    set.seed(time_seed())
-    tmp <- random_mapping(observable_groups,1)
-    tmp <- data.frame(tmp) %>% magrittr::set_colnames(paste("MRP",i,sep=""))
-    output <- cbind(output, tmp)
-  }
-  if (drop == TRUE) {
-    output <- output %>% dplyr::select(-group)
-  }
-  output <- output %>% dplyr::mutate_if(is.factor, as.integer)
-  return(output)
-}
-
-#' @export
-random_mapping <- function(X, levels_per_group) {
-  unique_groups <- unique(X)
-  g <- length(unique_groups)
-  n <- length(X)
-  mappings <- matrix(sample(g * levels_per_group, replace = FALSE, 
-                            size = (g * levels_per_group)), nrow = g, ncol = levels_per_group)
-  mapped_X <- matrix(0, nrow = n, ncol = 1)
-  for (i in 1:n) {
-    ind <- sample(1:levels_per_group, size = 1)
-    mapped_X[i] <- mappings[which(unique_groups == X[i]), ind]
-  }
-  return(factor(mapped_X))
-}
-
-
-#' @export
 get_regression_forest_prediction <- function(train_data, test_data, ...) {
   train_X <- train_data %>% dplyr::select(-Y)
+  print("got here")
   forest <- grf::regression_forest(X = train_X, Y = train_data$Y, ...)
+  print("got here 2")
   yhat <- predict(forest, 
                   newdata = test_data %>% dplyr::select(-Y), 
                   estimate.variance = FALSE)$predictions
+  print("didnt make it")
   return(yhat)
 }
 
@@ -169,7 +182,9 @@ get_xgboost_mse <- function(train,test,...){
 
 #' @export
 get_forest_mse <- function(train_data, test_data, ...) {
-  yhat <- get_regression_forest_prediction(train_data = train_data, test_data = test_data, ...)
+  yhat <- tryCatch({get_regression_forest_prediction(train_data = train_data, test_data = test_data, ...)},
+                   error=function(e){return(rbind(train_data,test_data))})
+  print(yhat)
   mse <- mean((test_data$Y - yhat)^2)
   return(mse)
 }
