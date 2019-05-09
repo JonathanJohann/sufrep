@@ -10,7 +10,7 @@ one_hot_encode <- function(k){
 }
 
 helmert_encode <- function(X,G,k){
-  #It won't be happy unless you provide A in both ~ arg and list arg. But 
+  #It won't be happy unless you provide A in both ~ arg and list arg. But
   #X[,G] <- as.factor(X[,G])
   #CM <- stats::model.matrix(~ G,data=X,contrasts = list(G = "contr.helmert"))
   #CM <- CM[,-1] #Drop the intercept term
@@ -106,12 +106,12 @@ low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,1
         k <- dim(id)[1]
         train.X2 <- trainData[,-which(colnames(trainData) %in% c(Y))]
         CM <- low_rank_encode(train.X2,G=G,num_components=cv_vals[i],cross_validate=FALSE,model=model)
-        
+
         map <- data.frame(cbind(id, CM))
-        
-        
+
+
         enc <- function(X) {
-          
+
           X_enc <- map[X[,G],]
           rownames(X_enc) <- NULL
           X <- cbind(X,X_enc)
@@ -139,7 +139,7 @@ low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,1
                      error=function(e){
                        return(svd(CM[,colSums(!is.finite(CM))==0]))
                      })
-  
+
   np <- min(num_components,dim(decomp$u)[2])
   CM <- data.frame(decomp$u[,1:np])
   colnames(CM) <- paste("E",1:np,sep="")
@@ -165,12 +165,12 @@ sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_val
         k <- dim(id)[1]
         train.X2 <- trainData[,-which(colnames(trainData) %in% c(Y))]
         CM <- sparse_low_rank_encode(train.X2,G=G,num_components=cv_vals[i],cross_validate=FALSE,model=model)
-        
+
         map <- data.frame(cbind(id, CM))
-        
-        
+
+
         enc <- function(X) {
-          
+
           X_enc <- map[X[,G],]
           rownames(X_enc) <- NULL
           X <- cbind(X,X_enc)
@@ -196,7 +196,7 @@ sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_val
                      error=function(e){
                        return(sparsepca::spca(CM[,colSums(!is.finite(CM))==0]))
                      })
-  
+
   np <- min(num_components,dim(decomp$loadings)[2])
   U <- decomp$loadings[,1:np]
   CM <- as.matrix(CM)
@@ -224,28 +224,37 @@ permutation_encode <- function(k,num_permutations=1){
   return(CM)
 }
 
-mnl_encode <- function(X,G,k){
+mnl_encode <- function(X,G,k,folds=3){
 
   categorical_names <- which(colnames(X) %in% c(G))
   train.Y <- as.matrix(X[,categorical_names])
   train.X <- as.matrix(X[,-categorical_names])
-  fit <- tryCatch({
-    cv.glmnet(x=train.X,y=train.Y,nfolds=4,family="multinomial")
-  },error=function(e){
-    redundant.Y <- rbind(train.Y,train.Y,train.Y)
-    redundant.X <- rbind(train.X,train.X,train.X)
-    return(cv.glmnet(x=redundant.X,y=redundant.Y,nfolds=4,family="multinomial"))
-    
-  })
+  fold_cat <- category_stratify(train.Y,num_folds=folds)
+  labels <- matrix(0,ncol=length(train.Y))
+  for(j in 1:folds){
+    labels[,fold_cat[[j]]] <- j
+  }
+  remainder <- which(labels==0)
+  labels[,remainder] <- sample(c(1:folds),size=length(remainder),replace=TRUE)
+
+  fit <- cv.glmnet(x=train.X,y=train.Y,foldid=labels,family="multinomial")#tryCatch({
+    #cv.glmnet(x=train.X,y=train.Y,foldid=labels,family="multinomial")
+  #},error=function(e){
+  #  redundant.Y <- rbind(train.Y,train.Y,train.Y)
+  #  redundant.X <- rbind(train.X,train.X,train.X)
+  #  return(cv.glmnet(x=redundant.X,y=redundant.Y,nfolds=3,family="multinomial"))
+  #
+  #})
+
   coef_vals <- coef(fit,s="lambda.1se")
   CM <- c()
   classes <- names(coef_vals)
-  
+
   for(i in 1:k){
     tmp <- as.data.frame(as.matrix(t(coef_vals[[i]])))
     CM <- rbind(CM,tmp)
   }
-  
+
   CM <- CM[,-1]
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
   return(CM)
@@ -288,12 +297,12 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
 
     return(f)
 }
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
