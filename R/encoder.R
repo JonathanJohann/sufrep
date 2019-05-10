@@ -237,25 +237,25 @@ mnl_encode <- function(X,G,k,folds=3){
   remainder <- which(labels==0)
   labels[,remainder] <- sample(c(1:folds),size=length(remainder),replace=TRUE)
 
-  fit <- cv.glmnet(x=train.X,y=train.Y,foldid=labels,family="multinomial")#tryCatch({
-    #cv.glmnet(x=train.X,y=train.Y,foldid=labels,family="multinomial")
-  #},error=function(e){
-  #  redundant.Y <- rbind(train.Y,train.Y,train.Y)
-  #  redundant.X <- rbind(train.X,train.X,train.X)
-  #  return(cv.glmnet(x=redundant.X,y=redundant.Y,nfolds=3,family="multinomial"))
-  #
-  #})
-
+  fit <- cv.glmnet(x=train.X,y=train.Y,foldid=labels,family="multinomial")
   coef_vals <- coef(fit,s="lambda.1se")
-  CM <- c()
-  classes <- names(coef_vals)
-
+  CM <- data.frame(matrix(0,ncol=length(colnames(train.X))))
+  colnames(CM) <- colnames(train.X)
+  all_cols <- colnames(CM)
   for(i in 1:k){
-    tmp <- as.data.frame(as.matrix(t(coef_vals[[i]])))
-    CM <- rbind(CM,tmp)
+    tmp <- tryCatch({as.data.frame(as.matrix(t(coef_vals[[i]])))},error=function(e){return(CM[1,])})
+    tmp_cols <- colnames(tmp)
+    needed <- all_cols[-which(tmp_cols %in% all_cols)]
+    if(length(needed)>0){
+      for(l in 1:length(needed)){
+          tmp[,needed[l]] <- 0
+      }
+    }
+    CM <- rbind(CM,tmp[,all_cols])
   }
 
-  CM <- CM[,-1]
+  CM <- CM[-1,]
+  rownames(CM) <- NULL
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
   return(CM)
 }
