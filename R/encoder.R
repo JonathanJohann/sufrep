@@ -9,28 +9,15 @@ one_hot_encode <- function(k){
   return(CM)
 }
 
-helmert_encode <- function(X,G,k){
-  #It won't be happy unless you provide A in both ~ arg and list arg. But
-  #X[,G] <- as.factor(X[,G])
-  #CM <- stats::model.matrix(~ G,data=X,contrasts = list(G = "contr.helmert"))
-  #CM <- CM[,-1] #Drop the intercept term
-  #colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
-  CM <- matrix(0, nrow = k, ncol = k)
-  CM <- matrix(-1/(k - col(CM) + 1), nrow = k, ncol = k)
-  CM[upper.tri(CM)] <- 0
-  CM <- CM + diag(k)
-  CM <- CM[, 1:(k - 1)]
+helmert_encode <- function(k){
+  CM <- stats::contr.helmert(k)
   colnames(CM) <- paste("E", 1:(k-1), sep = "")
+
   return(CM)
 }
 
-deviation_encode <- function(X,G,k){
-  #CM <- stats::model.matrix(~G,data=X,contrasts = list(G = "contr.sum"))
-  #CM <- CM[,-1] #Drop the intercept term
-  #colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
-  CM <- diag(k)
-  CM[k, ] <- CM[k, ] - 1
-  CM <- CM[, 1:(k - 1)]
+deviation_encode <- function(k){
+  CM <- stats::contr.sum(k)
   colnames(CM) <- paste("E", 1:(k-1), sep = "")
   return(CM)
 }
@@ -270,8 +257,8 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
 
     CM <- switch(method,
                  one_hot = one_hot_encode(k),
-                 helmert = helmert_encode(X,G,k),
-                 deviation = deviation_encode(X,G,k),
+                 helmert = helmert_encode(k),
+                 deviation = deviation_encode(k),
                  repeated_effect = repeated_effect_encode(k),
                  difference = difference_encode(k),
                  simple_effect = simple_effect_encode(k),
