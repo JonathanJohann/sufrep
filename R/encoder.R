@@ -67,10 +67,8 @@ fisher_encode <- function(X,G,Y){
 }
 
 means_encode <- function(X,G){
-
   CM <- aggregate(X,list(X[,G]),mean)
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
-  ordering <-
   return(CM)
 }
 
