@@ -76,12 +76,12 @@ low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,1
 
   if((cross_validate==TRUE)|(is.null(num_components))){
     mses <- c()
+    set.seed(time_seed())
     randomized_df <- X[sample(nrow(X)), ]
     rownames(randomized_df) <- NULL
     fold_cat <- category_stratify(randomized_df[,G],num_folds=folds)
     for(i in 1:length(cv_vals)){
       mse <- c()
-      print(paste("--CV FOLD--",i,sep=""))
       for(j in 1:folds){
         testIndexes <- fold_cat[[j]]
         testData <- randomized_df[testIndexes, ]
@@ -119,7 +119,12 @@ low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,1
     mx <- which(mses==min(mses))[1]
     num_components <- cv_vals[mx]
   }
+  if(!is.null(Y)){
+    remove_response <- which(colnames(X) %in% c(Y))
+    X <- X[,-remove_response]
+  }
   CM <- means_encode(X,G)
+  CM <- as.matrix(CM)
   decomp <- tryCatch({svd(CM)},
                      error=function(e){
                        return(svd(CM[,colSums(!is.finite(CM))==0]))
@@ -135,11 +140,11 @@ sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_val
 
   if((cross_validate==TRUE)|(is.null(num_components))){
     mses <- c()
+    set.seed(time_seed())
     randomized_df <- X[sample(nrow(X)), ]
     rownames(randomized_df) <- NULL
     fold_cat <- category_stratify(randomized_df[,G],num_folds=folds)
     for(i in 1:length(cv_vals)){
-      print(paste("--CV FOLD--",i,sep=""))
       mse <- c()
       for(j in 1:folds){
         testIndexes <- fold_cat[[j]]
@@ -152,7 +157,6 @@ sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_val
         CM <- sparse_low_rank_encode(train.X2,G=G,num_components=cv_vals[i],cross_validate=FALSE,model=model)
 
         map <- data.frame(cbind(id, CM))
-
 
         enc <- function(X) {
 
@@ -176,7 +180,12 @@ sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_val
     mx <- which(mses==min(mses))[1]
     num_components <- cv_vals[mx]
   }
+  if(!is.null(Y)){
+    remove_response <- which(colnames(X) %in% c(Y))
+    X <- X[,-remove_response]
+  }
   CM <- means_encode(X,G)
+  CM <- as.matrix(CM)
   decomp <- tryCatch({sparsepca::spca(CM,verbose=FALSE)},
                      error=function(e){
                        return(sparsepca::spca(CM[,colSums(!is.finite(CM))==0]))

@@ -1,4 +1,4 @@
-# levels: Sufficient Representations of Categorical Variables
+# sufrep: Sufficient Representations of Categorical Variables
 
 This package implements the methods for providing sufficient representations of categorical variables mentioned in Johannemann et al. (2019).
 
