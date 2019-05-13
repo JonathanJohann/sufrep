@@ -124,6 +124,7 @@ low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_vals=c(5,1
     X <- X[,-remove_response]
   }
   CM <- means_encode(X,G)
+  CM <- as.matrix(CM)
   decomp <- tryCatch({svd(CM)},
                      error=function(e){
                        return(svd(CM[,colSums(!is.finite(CM))==0]))
@@ -184,6 +185,7 @@ sparse_low_rank_encode <- function(X,G,Y=NULL,num_components=NULL,folds=3,cv_val
     X <- X[,-remove_response]
   }
   CM <- means_encode(X,G)
+  CM <- as.matrix(CM)
   decomp <- tryCatch({sparsepca::spca(CM,verbose=FALSE)},
                      error=function(e){
                        return(sparsepca::spca(CM[,colSums(!is.finite(CM))==0]))

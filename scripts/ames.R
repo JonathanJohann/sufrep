@@ -15,7 +15,7 @@ seeds = 1
 y_var = "SalePrice"
 target_categorical = "Neighborhood"
 
-dataset = data("ames",package="sufrep")
+dataset = sufrep::ames
 dataset$Y = dataset[,y_var]
 dataset = dataset[,-which(colnames(dataset) %in% c(y_var))]
 

@@ -12,7 +12,7 @@ folds = 4
 seeds = 1
 y_var = "price"
 target_categorical = "zipcode"
-dataset = data("kingcounty",package="sufrep")
+dataset = sufrep::kingcounty
 dataset$Y = dataset[,y_var]
 dataset = dataset[,-which(colnames(dataset) %in% c(y_var))]
 

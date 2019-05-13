@@ -15,7 +15,7 @@ seeds = 1
 y_var = "Education.score"
 target_categorical = "City"
 
-dataset = data("pakistan",package="sufrep")
+dataset = sufrep::pakistan
 dataset$Y = dataset[,y_var]
 dataset = dataset[,-which(colnames(dataset) %in% c(y_var))]
 
