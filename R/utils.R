@@ -66,7 +66,7 @@ evaluate_method <- function(df,categorical,response,k=10,seeds=1,model="regressi
     colnames(output) <- c("file", "model", "seed", "fold", "one_hot", "multi_perm", 
                           "add_means", "add_svd", "add_spca", "add_pax_weight", "perm", 
                           "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")  
-    saveRDS(output, file = paste("Updated_Feb21_2019_", k, "_seed", i, "_", seed_val, ".rds", sep = ""))
+    saveRDS(output, file = paste("Evaluation_", k, "_seed", i, "_", seed_val, ".rds", sep = ""))
   }
   return(data.frame(output))
   
@@ -127,13 +127,10 @@ category_stratify <- function(categories,num_folds=4){
 #' @export
 get_regression_forest_prediction <- function(train_data, test_data, ...) {
   train_X <- train_data %>% dplyr::select(-Y)
-  print("got here")
   forest <- grf::regression_forest(X = train_X, Y = train_data$Y, ...)
-  print("got here 2")
   yhat <- predict(forest, 
                   newdata = test_data %>% dplyr::select(-Y), 
                   estimate.variance = FALSE)$predictions
-  print("didnt make it")
   return(yhat)
 }
 
@@ -146,26 +143,21 @@ get_xgboost_mse <- function(train,test,...){
   test_Y <- test %>% dplyr::pull(Y)
   test_X <- as.matrix(test %>% dplyr::select(-Y))
   
-  xgb_grid_1 = expand.grid(nrounds = c(20,50,100),  # this is n_estimators in the python code above
-                           max_depth = c(3,6,9,12),#, 15, 20, 25),
-                           colsample_bytree = c(0.5,0.7,0.9),#seq(0.5, 0.9, length.out = 5),
-                           ## The values below are default values in the sklearn-api. 
+  xgb_grid_1 = expand.grid(nrounds = c(20,50,100),  
+                           max_depth = c(3,6,9,12),
+                           colsample_bytree = c(0.5,0.7,0.9),
                            eta = c(0.1,0.3,0.5),
                            gamma=c(0,0.1),
                            min_child_weight = c(1,5,10),
                            subsample = c(0.5,0.75,1.0)
   )
   
-  # pack the training control parameters
   xgb_trcontrol_1 = trainControl(
     method = "cv",
     number = 3,  
     allowParallel = TRUE
   )
-  
-  
-  # train the model for each parameter combination in the grid, 
-  #   using CV to evaluate
+
   xgb_train_1 = train(x=train_X,
                       y=train_Y,
                       trControl = xgb_trcontrol_1,
@@ -191,8 +183,6 @@ get_forest_mse <- function(train_data, test_data, ...) {
 
 #' @export
 fix_factors <- function(x) {
-  # if you directly convert factors to integers, you won't actually convert the factor '1' to 1 when '1' is not the first observed
-  # factor in your data.
   return(as.numeric(as.character(x)))
 }
 
