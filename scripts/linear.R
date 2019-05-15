@@ -1,9 +1,11 @@
 
+rm(list=ls())
 
 library(tidyverse)
 library(xgboost)
 library(glmnet)
 library(sufrep)
+library(sparsepca)
 
 source("dgp.R")
 source("utils.R")

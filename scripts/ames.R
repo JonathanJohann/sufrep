@@ -7,6 +7,7 @@ library(caret)
 library(glmnet)
 library(xgboost)
 library(sufrep)
+library(sparsepca)
 
 source("dgp.R")
 source("utils.R")
