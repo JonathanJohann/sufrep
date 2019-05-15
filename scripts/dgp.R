@@ -1,12 +1,12 @@
 
 
-#' @export
+
 make_X <- function(n, p, rho) {
     sigma <- toeplitz(rho^seq(p + 1))
     X <- MASS::mvrnorm(n = n, mu = rep(0, p + 1), Sigma = sigma) %>% magrittr::set_colnames(c("L", paste("X", 1:p, sep = "")))
     return(X)
 }
-#' @export
+
 make_AL <- function(X, size_l, size_a, comp_percent, random_exponential = FALSE) {
     X[, "L"] <- dplyr::ntile(X[, "L"], size_l)
     p <- ncol(X[, grep("X", colnames(X))])
@@ -31,7 +31,7 @@ make_AL <- function(X, size_l, size_a, comp_percent, random_exponential = FALSE)
     colnames(X)[ncol(X)] <- "A"
     return(X)
 }
-#' @export
+
 make_linear <- function(args) {
     
     beta = matrix(c(sample(c(-1, 1), size = ceiling(0.6 * args$p), replace = TRUE), rep(0, floor(0.4 * args$p))), ncol = 1)
@@ -43,7 +43,7 @@ make_linear <- function(args) {
     Y = mu_star + rnorm(n = nrow(mu_star), mean = 0, sd = sqrt(var(mu_star)/args$snr))
     return(Y)
 }
-#' @export
+
 make_interactions <- function(args) {
     X <- args$X[, grepl("X", colnames(args$X))]
     p <- ncol(X[, grepl("X", colnames(X))])
@@ -62,7 +62,7 @@ make_interactions <- function(args) {
 }
 
 
-#' @export
+
 make_effect <- function(X, mu, size_l, lambda, interactions = FALSE, num_interactions = 1) {
     p <- ncol(X[, grepl("X", colnames(X))])
     var_mu <- var(mu)
@@ -86,7 +86,7 @@ make_effect <- function(X, mu, size_l, lambda, interactions = FALSE, num_interac
     colnames(X)[ncol(X)] <- "L_i"
     return(X)
 }
-#' @export
+
 make_dataset <- function(setup, n, p, rho, size_l, size_a, comp_percent, lambda, snr, num_interactions = 1, seed = NULL, test = TRUE) {
     
     if (!is.null(seed)) 
