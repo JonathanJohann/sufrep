@@ -5,8 +5,8 @@ library(xgboost)
 library(glmnet)
 library(sufrep)
 
-source(dgp.R)
-source(utils.R)
+source("dgp.R")
+source("utils.R")
 
 config <- expand.grid(
   setup="linear",

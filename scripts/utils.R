@@ -1,31 +1,35 @@
 
 
 
-#' @export
 evaluate <- function(train,test,
                      categorical,response,
                      method="one_hot",
                      model = "regression_forest",...){
-  
+
   remove_response <- which(colnames(train) %in% c(response))
-  
-  if(method %in% c("fisher","sparse_low_rank","low_rank")){
+
+  if(method %in% c("fisher")){
     train.X <- train
   } else {
     train.X <- train[,-remove_response]
   }
 
-  
+
   enc <- encoder(X=train.X,G=categorical,method=method,...)
   train <- enc(train)
   test <- enc(test)
-  
-  return(ifelse(model=="regression_forest",
-                get_forest_mse(train,test),
-                get_xgboost_mse(train,test)))
+
+
+  if(model=="regression_forest"){
+    mse <- get_forest_mse(train,test)
+  }
+  else{
+    mse <- get_xgboost_mse(train,test)
+  }
+  return(mse)
 }
 
-#' @export
+
 evaluate_method <- function(df,categorical,response,k=10,seeds=1,model="regression_forest",stratify=TRUE){
   output <- c()
   seed_val <- time_seed()
@@ -34,67 +38,110 @@ evaluate_method <- function(df,categorical,response,k=10,seeds=1,model="regressi
   methods <- c("one_hot","multi_permutation","means","low_rank",
                "sparse_low_rank","MNL","permutation","difference",
                "deviation","repeated_effect","helmert","fisher",
-              "simple_effect")
+               "simple_effect")
   for (i in 1:seeds) {
-    
+    seed_val <- time_seed()
+    set.seed(seed_val)
+
     total_indices <- 1:nrow(df)
-    
-    categ <- c(randomized_df %>% dplyr::mutate_at(categorical,as.character) 
-               %>% dplyr::mutate_at(categorical,as.numeric) 
+
+    categ <- c(randomized_df %>% dplyr::mutate_at(categorical,as.character)
+               %>% dplyr::mutate_at(categorical,as.numeric)
                %>% dplyr::select(categorical))
-    
+
     fold_cat <- category_stratify(categ[[1]],num_folds=k)
-    
+
     for (j in 1:k) {
       testIndexes <- fold_cat[[j]]
       testData <- randomized_df[testIndexes, ]
       trainData <- randomized_df[-testIndexes, ]
       mses <- c()
       for (q in 1:13){
-        mse <- evaluate(method=methods[q],train=trainData,test=testData,
-                        categorical=categorical,response=response,
-                        model=model,Y=response)
+
+        if(methods[q] %in% c("low_rank","sparse_low_rank")){
+          cv_vals <- c(5,10,15)
+          folds <- 3
+          cv_mses <- c()
+          set.seed(time_seed())
+          randomized_df2 <- trainData[sample(nrow(trainData)), ]
+          rownames(randomized_df2) <- NULL
+          fold_cat2 <- category_stratify(randomized_df2[,categorical],num_folds=folds)
+          for(ii in 1:length(cv_vals)){
+            print("Running CV...")
+            cv_mse <- c()
+            for(jj in 1:folds){
+              testIndexes2 <- fold_cat2[[jj]]
+              testData2 <- randomized_df2[testIndexes2, ]
+              trainData2 <- randomized_df2[-testIndexes2, ]
+
+              train.X2 <- trainData2[,-which(colnames(trainData2) %in% c(response))]
+              enc <- encoder(X=train.X2,G=categorical,num_components=cv_vals[ii],model=model)
+
+              trainData2 <- enc(trainData2)
+              testData2 <- enc(testData2)
+              if(model=="regression_forest"){
+                cv_mse <- c(mse,get_forest_mse(trainData2,testData2))
+              }
+              else{
+                cv_mse <- c(mse,get_xgboost_mse(trainData2,testData2))
+              }
+            }
+            cv_mses <- c(cv_mses,mean(cv_mse))
+          }
+          mx <- which(cv_mses==min(cv_mses))[1]
+          num_components <- cv_vals[mx]
+          mse <- evaluate(method=methods[q],train=trainData,test=testData,
+                          categorical=categorical,response=response,
+                          model=model,Y=response,num_components=num_components)
+        }
+
+        else{
+          mse <- evaluate(method=methods[q],train=trainData,test=testData,
+                          categorical=categorical,response=response,
+                          model=model,Y=response)
+        }
+
         print(mse)
         mses <- c(mses,mse)
         print(methods[q])
       }
-      
+
       new_row <- c(nrow(df), model, seed_val, j, mses)
       output <- rbind(output, new_row)
       print(paste("Done with -- ",j,sep=""))
     }
-    colnames(output) <- c("file", "model", "seed", "fold", "one_hot", "multi_perm", 
-                          "add_means", "add_svd", "add_spca", "add_pax_weight", "perm", 
-                          "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")  
+    colnames(output) <- c("file", "model", "seed", "fold", "one_hot", "multi_perm",
+                          "add_means", "add_svd", "add_spca", "add_pax_weight", "perm",
+                          "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")
     saveRDS(output, file = paste("Evaluation_", k, "_seed", i, "_", seed_val, ".rds", sep = ""))
   }
   return(data.frame(output))
-  
+
 }
 
 
 
 
 
-#' @export
+
 get_noise_scale <- function(noiseless, snr) {
   sqrt(var(noiseless)/snr)
 }
 
 
-#' @export
+
 time_seed <- function() {
   as.integer((as.numeric(Sys.time()) * 1e+07)%%1e+07)
 }
 
 
 
-#' @export
+
 scale_vals <- function(x){
   (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
 }
 
-#' @export
+
 category_stratify <- function(categories,num_folds=4){
   indices <- 1:length(categories)
   size_per_fold <- as.integer(length(categories)/num_folds)
@@ -113,37 +160,37 @@ category_stratify <- function(categories,num_folds=4){
       else{
         added_indices <- sample(available,num_select,replace=FALSE)
       }
-      vals <- c(vals,added_indices)  
+      vals <- c(vals,added_indices)
     }
     folds[[j]] <- vals
     tmpcat[vals] <- rep(-99999,length(vals))
     indices[vals] <- rep(-99999,length(vals))
   }
   return(folds)
-  
+
 }
 
 
-#' @export
+
 get_regression_forest_prediction <- function(train_data, test_data, ...) {
   train_X <- train_data %>% dplyr::select(-Y)
   forest <- grf::regression_forest(X = train_X, Y = train_data$Y, ...)
-  yhat <- predict(forest, 
-                  newdata = test_data %>% dplyr::select(-Y), 
+  yhat <- predict(forest,
+                  newdata = test_data %>% dplyr::select(-Y),
                   estimate.variance = FALSE)$predictions
   return(yhat)
 }
 
 
 
-#' @export
+
 get_xgboost_mse <- function(train,test,...){
   train_Y <- train %>% dplyr::pull(Y)
   train_X <- as.matrix(train %>% dplyr::select(-Y))
   test_Y <- test %>% dplyr::pull(Y)
   test_X <- as.matrix(test %>% dplyr::select(-Y))
-  
-  xgb_grid_1 = expand.grid(nrounds = c(20,50,100),  
+
+  xgb_grid_1 = expand.grid(nrounds = c(20,50,100),
                            max_depth = c(3,6,9,12),
                            colsample_bytree = c(0.5,0.7,0.9),
                            eta = c(0.1,0.3,0.5),
@@ -151,10 +198,10 @@ get_xgboost_mse <- function(train,test,...){
                            min_child_weight = c(1,5,10),
                            subsample = c(0.5,0.75,1.0)
   )
-  
+
   xgb_trcontrol_1 = trainControl(
     method = "cv",
-    number = 3,  
+    number = 3,
     allowParallel = TRUE
   )
 
@@ -164,24 +211,23 @@ get_xgboost_mse <- function(train,test,...){
                       tuneGrid = xgb_grid_1,
                       method = "xgbTree"
   )
-  
-  
+
+
   predictions <- predict(xgb_train_1,test_X)
   mse <- mean((test_Y-predictions)^2)
   return(mse)
 }
 
 
-#' @export
+
 get_forest_mse <- function(train_data, test_data, ...) {
   yhat <- tryCatch({get_regression_forest_prediction(train_data = train_data, test_data = test_data, ...)},
                    error=function(e){return(rbind(train_data,test_data))})
-  print(yhat)
   mse <- mean((test_data$Y - yhat)^2)
   return(mse)
 }
 
-#' @export
+
 fix_factors <- function(x) {
   return(as.numeric(as.character(x)))
 }
