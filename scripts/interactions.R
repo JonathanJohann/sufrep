@@ -1,9 +1,13 @@
 
 
-library(levels)
+
 library(tidyverse)
 library(xgboost)
+library(glmnet)
 library(sufrep)
+
+source(dgp.R)
+source(utils.R)
 
 config <- expand.grid(
   setup="interactions",
@@ -62,9 +66,6 @@ walk(seq(dim(config)[1]), function(i) {
       } else {
         mses[ii] <- evaluate(method=encodings[ii],train=train,test=test,categorical = "A",response="Y")
       }
-      #get_mse(setup=encodings[ii],
-      #        dataset=sim_data,
-      #        group="A",num.trees=cfg$num_trees,num.threads=1)
       print(ii)
     }
 
@@ -75,7 +76,7 @@ walk(seq(dim(config)[1]), function(i) {
   }) %>% bind_rows()
 
   # Write to csv
-  filename <- paste("Z57PAPER_RF_NEW_",cfg$setup,"_n", cfg$n,
+  filename <- paste(cfg$setup,"_n", cfg$n,
                     "_p",cfg$p,
                     "_rhos",cfg$rhos,
                     "_snr", cfg$noise_ratio,

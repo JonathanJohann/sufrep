@@ -6,6 +6,8 @@ library(grf)
 library(glmnet)
 library(sufrep)
 
+source(dgp.R)
+source(utils.R)
 
 model = "regression_forest"
 folds = 4
