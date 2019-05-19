@@ -174,7 +174,7 @@ category_stratify <- function(categories,num_folds=4){
 
 get_regression_forest_prediction <- function(train_data, test_data, ...) {
   train_X <- train_data %>% dplyr::select(-Y)
-  forest <- grf::regression_forest(X = train_X, Y = train_data$Y, ...)
+  forest <- grf::regression_forest(X = train_X, Y = train_data$Y, num.threads=1,...)
   yhat <- predict(forest,
                   newdata = test_data %>% dplyr::select(-Y),
                   estimate.variance = FALSE)$predictions
