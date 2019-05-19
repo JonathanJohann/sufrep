@@ -1,0 +1,926 @@
+\documentclass{article}
+
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fancyvrb}
+\usepackage{enumerate}
+\usepackage{relsize}
+\usepackage{float}
+
+%%%%%%%%%%%%%%% for independence symbol
+\usepackage{graphicx}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+
+%%%%%%%%%%%%%%% added for the algorithm portion
+
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+%%%%%%%%%%%%%%%%
+
+\usepackage{tikz}
+\usetikzlibrary{fit,positioning}
+
+\usepackage{hyperref}
+\usepackage[margin=1.5in]{geometry}
+\hypersetup{colorlinks,citecolor=blue,urlcolor=blue,linkcolor=blue}
+
+\usepackage{stefan_tex}
+\graphicspath{{./figures/}}
+
+% Landscape, for large tables
+\usepackage{lscape}
+
+\usepackage{multicol}
+
+
+%\numberwithin{equation}{section}
+
+%%%%%%%%% Theorems
+\theoremstyle{plain}
+\newtheorem{prop}{Proposition}
+
+\newtheorem{conj}[prop]{Conjecture}
+\newtheorem{coro}[prop]{Corollary}
+\newtheorem{lemm}[prop]{Lemma}
+\newtheorem{theo}[prop]{Theorem}
+
+\theoremstyle{definition}
+\newtheorem{exam}{Example}
+\newtheorem{defi}[exam]{Definition}
+
+\theoremstyle{remark}
+\newtheorem{comm}[prop]{Comment}
+\newtheorem{rema}[prop]{Remark}
+
+\author{Jonathan Johannemann \\ \texttt{jonjoh@stanford.edu}
+\and Vitor Hadad \\ \texttt{vitorh@stanford.edu}
+\and Susan Athey \\ \texttt{athey@stanford.edu}
+\and Stefan Wager \\ \texttt{swager@stanford.edu}}
+\date{Stanford University}
+\title{Sufficient Representations for Categorical Variables}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    [[[REDO]]]
+    We propose a solution via what we call the sufficient latent state assumption which seeks to describe the relationship between covariates $X_i$, response $Y_i$, and observable groups $G_i$. We explore how this assumption can be used to develop sufficient representations of dimension $k \ll |\gcal|$ for universally consistent estimators. We then show promising results for these representations in both simulated and empirical datasets.
+\end{abstract}
+
+
+
+
+% ----------- INTRO --------------
+\section{Introduction}
+
+Many regression problems involve data collected from a number groups that may be statistically relevant.
+For example, in a medical setting we may want to model health outcomes using data on patients from
+several hospitals, and acknowledge that different hospitals may have idiosyncratic effects on patients
+that are not explained by other covariates. Similar considerations arise when working with data on
+students from different schools, voters from different zip-codes, employees at different firms, etc.
+
+One of the most wide-spread approaches to this problem is via fixed effect modeling,
+as follows. Suppose that we observe $n$ samples $\p{X_i, \, G_i, \, Y_i}$
+for $i = 1, \, \cdots, \, n$, where $X_i \in \RR^p$ is a set of subject-specific covariates, $G_i \in \gcal$ is a categorial variable that
+records group membership and $Y_i \in \RR$ is the respond of in interest, and that we want to estimate
+\begin{equation}
+\label{eq:mu}
+\mu(x, \, g) = \EE{Y_i \cond X_i = x, \, G_i = g}.
+\end{equation}
+Then, the simple fixed effects approach starts by positing a model
+\begin{equation}
+\label{eq:FE}
+\mu(x, \, g) = x \beta + \alpha_g,
+\end{equation}
+and then estimating the coefficients $\beta$ and $\alpha_g$ via ordinary least squares regression.
+More sophisticated extensions of this approach may involve considering non-linear transformations
+of $x$, interactions between group membership and the covariates $x$, and/or regularization
+\citep{angrist2008mostly,diggle2002analysis,wooldridge2010econometric}.
+
+Fixed effects modeling, however, does not always perform well with complex non-linear signals
+or when the number of groups $\abs{\gcal}$ is large. The model \eqref{eq:FE} is quite rigid
+and may not be able to represent rich signals while; and, at the same time, the large number of $\alpha_g$
+parameters in the model \eqref{eq:FE} may result in problems for statistical inference \citep{neyman1948consistent}.
+In other words, the model \eqref{eq:FE} may have too many parameters to be stable all while lacking the
+degrees of freedom to fit the signal well.
+
+The goal of this paper is to develop more parsimonious approach for representing group membership
+avoids the above problems. Specifically, we seek a mapping $\psi$ that embeds group membership $G_i$
+into a $k$-dimensional space without losing any predictive information, i.e.,
+\begin{equation}
+\label{eq:repr}
+\psi: \gcal \rightarrow \RR^k, \ \ \mu(x, \, g) = f(x, \, \psi(g)),
+\end{equation}
+such that $k$ is small (in particular, $k \ll \abs{\gcal}$) and the function $f(\cdot, \, \cdot)$ is still easy to learn.
+Given such a mapping, the problem \eqref{eq:mu} becomes a routine regression problem with
+$(p+k)$-dimensional real-valued features $(X_i, \, \psi(G_i))$, and we can use out-of-the-box statistical learning
+software on it.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\tikzstyle{main}=[circle, minimum size = 10mm, thick, draw =black!80, node distance = 14mm]
+\tikzstyle{connect}=[-latex, thick]
+\tikzstyle{box}=[rectangle, draw=black!100]
+  \node[main] (L) [xshift=-2.5cm,label=$L_i$] { };
+  \node[main, fill=black!10] (X) [yshift=1.5cm,label=$X_i$] {};
+  \node[main, fill = black!10] (G) [yshift=-1.5cm,label=$G_i$] { };
+  \node[main, fill=black!10] (Y) [xshift=2.5cm,label=$Y_i$] { };
+  \path
+        (L) edge [connect] (X)
+        (L) edge [connect] (G)
+        (X) edge [connect] (Y)
+        (L) edge [connect] (Y);
+\end{tikzpicture}
+\caption{Causal graph depicting the key assumption that $Y_i$ and $X_i$ are independent of group
+membership $G_i$ conditionally on latent state $L_i$. The grayed-out nodes are observed.}
+\label{fig:graph_simple}
+\end{figure}
+
+In order to obtain a useful representation of group membership $G_i$, we of course need to assume
+something about the relationship between $G_i$ and the target outcome $Y_i$. The core assumption
+made in this paper is what we call the \emph{sufficient latent state assumption} depicted in Figure
+\ref{fig:graph_simple}: group membership $G_i$ has no direct causal effect on $Y_i$, but may be
+associated with latent variables $L_i$ that do have a direct effect on $Y_i$.
+For example, in the case of patients spread across hospitals, we assume that hospitals themselves do not
+directly \emph{cause} health outcomes affect $Y_i$; however, hospitals may still be \emph{predictive} of
+$Y_i$ through their association with latent causal variables. For example, patients may have unobserved
+characteristics, e.g., severity of disease or socioeconomic resources, that both affect $Y_i$ and lead the
+patient to self-select into different hospitals. Our main result is that, under this sufficient latent state
+assumption, practical representations of the form \eqref{eq:repr} exist and can be learned from data.
+
+The principle of representing high-cardinality categorical variables as real-valued vectors has played
+an important role in many different areas. For example, in natural language processing, it now common
+to start more complex analyses with a pre-processing step that represent words as vectors that capture
+the way in which the words are used in context \citep{mikolov2013efficient,pennington2014glove}.
+Meanwhile, in the literature on panel data analysis, our approach is perhaps most closely related
+to a proposal of \citet{bonhomme2015grouped} where individual time series belong to discrete clusters and we
+have only one fixed effect per cluster (rather than one per time series). \citet{bonhomme2015grouped} then fit
+this model via a $k$-means like algorithm that alternates clustering and estimation with per-cluster fixed
+effects.\footnote{Our approach is not directly comparable to either of these methods, as we do not focus on
+textual data, and do not assume that the latent state $L_i$ can be consistently estimated (in contrast,
+\citet{bonhomme2015grouped} assume that they have access to long enough time series that their
+clustering step is consistent which, in our setting, would be equivalent to assuming that $L_i$ can be recovered).} The resulting framework provides a means for introducing lower dimensional, sufficient representations of categorical variables.
+
+
+Our paper is structured as follows. We begin by reviewing similar problem settings in the fixed effects literature and the drawbacks of using existing methods in \ref{subsec:related_work}. In Section 2, we introduce the primary lemma which seeks to describe the true information we wish to extract from categorical variables. In Section 3, we expand on lemma 1 to develop methods that utilize this insight. In Sections 4 and 5, we run simulated and observational experiments with our proposed methods and follow up with discussion on how realized performance compared to our expectations.
+
+\subsection{Related Work}
+\label{subsec:related_work}
+
+Traditionally, the discussion of how best to account group membership $G_i$ in a non-parametric regression
+has focused on how to different ways to encode $G_i$ in a way that can be given as an input to
+statistical software. One simple way to do so is via one-hot encoding:
+\smash{$\omega: \gcal \rightarrow \{0, \, 1\}^M$} such that the $j$-th entry of \smash{$\omega(g)$}
+is 1 if and only if $g$ corresponds to the $j$-th element in $\gcal$, and where $M := {\abs{\gcal}}$. Note that linear regression on
+one-hot encoded features $(X_i, \, \omega(G_i))$ exactly recovers the standard fixed effects model
+\eqref{eq:FE}.
+
+As discussed above, however, one-hot encoding may lead to undesirably high-dimensional problems
+when $\abs{\gcal}$ is large. \footnote{Another slightly more subtle difficulty is that when the categorical
+variable has many levels, the individual features $\omega(G_i)_j$ become very sparse (i.e., they are usually
+0 and only very rarely 1). Many approaches to statistical learning work better with features whose
+variance roughly captures their range than with such spiky features.} In the Appendix (\ref{app:encodings}),
+we present multiple encoding methods that similarly project \smash{$\omega: \gcal \rightarrow \mathbb{R}^{\abs{\gcal}}$}.
+These methods do not utilize information from the covariates $X_i$ or response $Y_i$ and suffer from the same pitfalls that
+come with high dimensional representation of the observed groups $\gcal$. The primary difference for
+these methods are the user's interpretation of the encoded variables which are commonly constructed as the comparison of
+ the mean effect of a subset $\gcal' \in \gcal$ relative to the mean effect of the set $\gcal \backslash \gcal'$ or one of its subsets.
+
+
+The problem of fixed effects is especially challenging with sparsity-seeking methods such as the
+lasso \citep{hastie2015statistical} or decision trees \citep{breiman1984classification}, and related
+ensemble methods such as random forests \citep{breiman2001random} or gradient-boosted
+trees \citep{friedman2001greedy}. Sparsity-seeking methods will set the contribution of features
+to zero unless there is strong evidence that the features matters for prediction, and it is difficult
+for rare levels of $G_i$ to produce sufficient evidence to get a non-zero contribution to the model
+via their one-hot features. The end result is that sparsity seeking methods may largely ignore high-cardinality
+one-hot encoded factors.
+
+Another prevalent way of working with categorical variables with decision trees
+is to consider full factorial splits that allow for arbitrary grouping of the levels of the categorical
+variable. For a variable with $M := \abs{\gcal}$ levels, this allows
+for \smash{$2^{M - 1} - 1$} potential splits. \citet{breiman1984classification} showed that
+we can optimize over this exponential set of potential splits in time that scales linearly in $M$;
+however, from a statistical point of view, such factorial splits are prone to very strong overfitting
+when the number of levels is large.
+
+Recently, \citet{cerda2018similarity} consider a related problem of representing ``dirty'' categorical
+variables that might arise if, e.g., several categorical levels are just misspellings of each other, and
+propose using a low-dimensional embedding that exploits lexicographic similarity (i.e., factors with
+similar spellings are arranged close to each other). In this paper, we use information in the $X_i$,
+rather than lexicographic information, to construct an embedding; however, the high-level conclusion
+that we can achieve meaningful gains by using auxiliary information to embed categorical variables in
+a low-rank space remains.
+
+We also note, it is sometimes possible to achieve strong results by randomly projecting a one-hot
+representation of the categorical variables into $\RR^k$ \citep{rahimi2008random}. We also
+consider this approach but find that, at least in our experiments, we can achieve better
+performance using carefully crafted representations that leverage continuous covariates $X_i$.
+
+
+
+
+
+
+
+
+% ----------- INITIAL DISCUSSION AND DEFINITIONS --------------
+\section{Representing Groups with Sufficient Latent State}
+
+Our \emph{sufficient latent state} assumption presented in the introduction and depicted in the causal graph \ref{fig:graph_simple} implies that the distribution of the outcome $Y_{i}$ only depends on the observable factor $G_{i}$ through some unobservable latent variable $L_{i} \in \{\text{good}, \text{poor} \}$. In other words, if we knew the value of $L_{i}$, then also knowing $G_{i}$ would give us no additional information about the outcome. For a simple example, one may posit that a patient's underlying health status ($L_{i} \in \{\text{good}, \text{poor}\}$) may simultaneously determine to which hospital they are admitted ($G_{i}$), what symptoms ($X_i$) they exhibit, and what health outcomes outcomes ($Y_i$) they attain. Conditioned on the underlying health status, the hospital cannot provide any additional information about any of the other variables. Conversely, learning their hospital is only helpful inasmuch it allows us to infer something about their health status.
+
+The following lemma states that we can say further characterize \emph{how} the information about the categorical variable $G_{i}$ enter the model: the conditional expectation function of the outcome depends only on the \emph{conditional probabilities of the latent variable given the observable category}.
+
+\begin{lemm}
+\label{lemm:repr}
+Suppose that the latent state $L_i$ is discrete with $k$ possible levels, and that the probabilistic structure require by the sufficient latent state assumption (Figure \ref{fig:graph_simple}) holds. Then,
+\begin{equation}
+\label{eq:psi}
+\psi: \gcal \rightarrow \RR^k, \ \ \psi_l(g) = \PP{L_i = l \cond G_i = g}
+\end{equation}
+provides a sufficient representation of $G_i$ in the sense of \eqref{eq:repr}:
+\begin{equation}
+\label{eq:explicit}
+\mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} \psi_l(g)}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} \psi_l(g)}.
+\end{equation}
+\end{lemm}
+
+Expression \eqref{eq:explicit} formalizes the intution laid out in the previous paragraph. The information associated with the category only enters the conditional expectation via the set of probabilities $\PP{L_{i} = \ell \cond G_{i} = g}$. If there are only $K$ latent groups, then each category can be represented in a lossless manner by $K$ dimensional vector of probabilities. An immediate consequence of this result is that if we knew $\psi$ and gave training examples $((X_i, \, \psi(G_i)), \, Y_i)$ to any universally consistent learner, the learner would eventually recover the optimal prediction function $\mu(\cdot)$. To continue the example at the top of this section, the identity of the hospital enters the model through the probability that a patient is in good or poor health given the hospital.
+
+The dependence of the conditional expectation function $\mu$ on the latent variable probabilities $\psi$ via \eqref{eq:explicit} is non-linear; however, we will retain consistency if we use an expressive enough method for learning on $((X_i, \, \psi(G_i)), \, Y_i)$. Methods known to be universally consistent include $k$-nearest neighbors \citep{stone1977consistent}, various tree-based ensembles \citep{biau2008consistency}, and neural networks \citep{farago1993strong}.
+
+The discussion above may seem to imply that we need to estimate $\psi(g)$ directly. However, this quantity depends on the unobservable variable $L_{i}$ and its identification is  impossible without further assumptions and more sophisticated approach. Instead, we pursue a different approach based on the following fact: if $h: \mathbb{R}^{K} \rightarrow \mathbb{R}^{K}$ is a function that possesses a left-inverse $h^{\dagger} \circ h = \text{id}$, then $h \circ \psi$ must also be a sufficient representation, since we can define $f(x, \psi(g)) = \tilde{f}(x, h^{\dagger}(h(\psi(g))))$. Therefore, in this paper, we focus on simple approaches that just rely on finding simple functions sufficients representations of the form $h(\psi(g))$ and can be estimated using observable data $X_{i}$ and $G_{i}$.
+
+
+
+
+
+
+
+
+% ----------- METHODS --------------
+\section{Categorical variable encoding methods}
+\label{sec:categorical_encoding}
+
+Below we introduce methods that exploit the structure mentioned in the previous section. For an overview of other categorical encoding methods already in use, please see section \ref{app:encodings} in the Appendix. All of the methods below take the form of removing the categorical column and replacing it with a set of columns that can be proven to encode the same information.
+
+
+\subsection{Means encoding}
+\label{subsec:means}
+
+For our first method, we drop the categorical variables $G_{i}$ and substitute in the average value of the continuous regressors $X_{i}$ given the categorical variable. Figure \ref{fig:means_encoding} shows an illustration.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/means_encoding.pdf}
+  \caption{Implementation example of the \emph{means} encoding.}
+  \label{fig:means_encoding}
+\end{figure}
+
+This representation is easily interpretable, and it is simple to implement efficiently. This method may be particularly applicable in instances where the number of regressors $p$ is small, and in particular if  $p \ll |\gcal|$, since then the dimensionality reduction is more dramatic as compared to traditional encoding methods such as one-hot encoding. Conversely, if the dimension of $X_i$ is larger than the number of levels of the latent factor, then $\omega(g)$ may be a needlessly high-dimensional representation of $g$. However, due to its simplicity, using this representation may still be desirable in practice.
+
+\begin{lemm}
+\label{lemm:means}
+Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matrix $A$ defined~by $(A)_{tj} := \EE{X_{it} \cond L_{i} = g}$
+is left-invertible. Then, $\omega(g) = \EE{X_{i} \cond G_i = g}$ is sufficient in the sense of \eqref{eq:repr}:
+\begin{equation}
+\label{eq:explicit_mom}
+\mu(x, \, g) &= \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
+\end{equation}
+\end{lemm}
+
+
+\begin{algorithm}
+\label{alg:means}
+\caption{Means Encoding Method}
+\begin{algorithmic}[1]
+\Procedure{MeansEncoding}{$X,G$}
+\State $\Omega \gets 0_{n \times p}$
+\State $\bar{X} \gets 0_{|\mathcal{G}| \times p}$
+\For{$g$ in $1$:$|\mathcal{G}|$}
+\Comment{Compute the group averages}
+\State $\bar{X}_{g} \gets \frac{1}{|\{i:G_{i}=g\}|}\sum_{i:G_{i}=g}X_{i}$
+\EndFor
+\For{$i$ in $1$:$n$}
+\Comment{Populate with group averages}
+\State $\Omega_{i,\cdot} \gets \bar{X}_{G_{i}}$
+\EndFor
+\State \textbf{return} $\Psi$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/means_intuition.pdf}
+  \caption{Intution for the \emph{means} encoding on an illustrative data: the averages of the continuous variables $(X_{1}, {X_{2}})$ may reveal that the categories belong to distinct latent groups.}
+  \label{fig:lowrank_encoding}
+\end{figure}
+
+
+
+
+
+
+
+
+\subsection{Low-rank encodings}
+\label{subsec:lowrank}
+
+
+The \emph{means} encoding method described above may efficiently summarize the effect of the categorical variables if the continuous covariates are reasonably low-dimensional so that $p \ll M$. When $p$ is large, it might be beneficial to use lower-dimensional representation of the conditional means. As opposed to depending on the covariates as is, we propose utilizing methods such as PCA or Sparse PCA \cite{zou2006sparse} which can provide informative linear combinations of the original $X_{i}$.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/lowrank_encoding.pdf}
+  \caption{Implementation example of the \emph{low-rank} encoding with singular value decomposition. Alternatively, we could also have used sparse PCA in place of SVD.}
+  \label{fig:lowrank_encoding}
+\end{figure}
+
+We suggest two approaches that use common matrix factorization methods. The first method is as follows:
+\begin{align}
+\psi: G_{i} \mapsto U_{i,1:k} \label{eq:svd}
+\end{align}
+where $U_i$ is the left singular matrix in the singular value decomposition of the transpose of $E[X_i|G_i]$. Each row in $U$ corresponds to an observable group $G_i$ and, through cross validation, one can choose an appropriate value $k$ to approximate the relevant columns in the $|\gcal| \times |\gcal|$ matrix.
+
+Second, we propose the Sparse PCA encoding method which is similar but one can induce sparsity in the principal component vectors and the matrix $B$ satisfies the objective \cite{zou2006sparse}:
+\begin{align}
+    (\hat{A},\hat{B}) = \arg\min_{A,B} &\sum_{i=1}^n ||X_i - AB^TX_i||^2+ \lambda \sum_{j=1}^k ||\beta_j ||^2 + \sum_{j=1}^k \lambda_{1,j} ||\beta_j||_1\\
+    \text{s.t.} \quad & A^TA = I_{k \times k}
+    \label{eq:sparse_pca}
+\end{align}
+
+
+ By either picking the number of principal components that reconstruct 95\% of the original variance in $X$ or using cross validation to select the number of principal components, we can achieve an encoding with dimensionality $d<p$. We provide the outline for the procedure in \ref{alg:pcameans} which is the same as \ref{alg:means} except for the carefully chosen number of principal components as opposed to the original covariates $X$.
+
+While SVD can provide additional dimensionality reduction, there are caveats that come with the method. First, this process assumes that the first $k$ columns of the left singular matrix comprise of the relevant vectors to separate the latent groups. In \cite{cook2007fisher}, Cook talks about the idea of using the first $r$ number of principal components in regression in the hope that all relevant information with respect to the response is kept. The same concept holds for the latent groups' relevant covariates and therefore there is the possibly that those variables are contained in the last few singular vectors. Therefore, for this method, we highly recommend using cross validation to ensure its efficacy.
+
+Next, tree-based models such as random forest \cite{breiman2001random} or xgboost \cite{chen2016xgboost}, which fit to data by considering singular covariates at any point in the model, may have difficulty taking advantage of these approaches due to the potential rotation of the original covariate space. This can result in separability in two or more dimensions but not one dimension.
+
+Furthermore, the advantage of using sparse PCA over SVD is that the rotation in $X$ is restricted since the orthogonal vectors are penalized. This results in sparse, more interpretable principal component vectors and reduces the potential for difficulties arising from rotations of the original covariate space. However, the tradeoff for these benefits is that sparse PCA requires additional tuning of the $\lambda$ parameters.
+
+
+
+\begin{algorithm}
+\caption{Low Rank Encoding Method}\label{alg:lowrankmethod}
+\begin{algorithmic}[1]
+\Procedure{LowRankEncoding}{$X,G,k$}
+
+\State $M \gets$ \textcs{MeansEncoding}$(X, G)$
+\Comment{Compute the group averages}
+
+\State $U,D,V^T \gets SVD(M)$
+
+\State $S \gets 0_{n \times k}$
+\For{$i$ in $1$:$n$}
+  \Comment{Populate with left singular matrix truncated rows}
+  \State $S_{i,\cdot} \gets U_{G_{i},1:k}$
+\EndFor
+\State \textbf{return} $S$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{Sparse Low Rank Encoding Method}\label{alg:sparselowrankmethod}
+\begin{algorithmic}[1]
+\Procedure{SparseLowRankEncoding}{$X,G,k$}
+\State $M \gets$ \textcs{MeansEncoding}$(X, G)$
+\Comment{Compute the group averages}
+
+\State $A, B \gets SPCA(M)$
+\State $Z \gets M \cdot B_{\cdot,1:k}$
+
+\State $S \gets 0_{n \times k}$
+\For{$i$ in $1$:$n$}
+\Comment{Populate with sparse principal components rows}
+\State $S_{i,\cdot} \gets Z_{G_i,\cdot}$
+\EndFor
+
+\State \textbf{return} $S$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\subsection{Encoding by multinomial logistic regression coefficients}
+\label{subsec:mnl}
+
+For our third and last method, we propose estimating the conditional probability of category membership by multinomial logistic regression parametrized by coefficients $\{\theta_{g} \}_{g \in \mathcal{G}}$ (including an intercept)
+\begin{align}
+P(G_{i}|X_{i}) = \Lambda_{\theta}(G_{i}=g | X_{i}) =  \frac{\exp(\tilde{X}_{i}^{T} \theta_{g})}{\sum_{g'}\exp(\tilde{X}_{i}^{T}\theta_{g'})} \qquad \tilde{X}_{i} := (1, X_{i})
+\label{eq:mnl}
+\end{align}
+
+\noindent and then use the $(p+1)$-dimensional vector of coefficients associated with $g^{th}$ category to represent it.
+
+The main inspiration for this method is the natural language processing \emph{word2vec} model first presented by \cite{mikolov2013efficient}. In that work, the authors propose two methods to represent words (categories) in a large corpus as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we consider the continuous vectors $\tilde{X}_{i} := (1, X_{i})$ as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $\tilde{X}_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
+
+
+{\color{red} Our method can also be seen to be a variation on the \emph{inverse regression} method of \cite{taddy2014heterogeneous}. Those authors make the following proposition:
+\begin{align*}
+    y_i\ \indep\ x_i\ |\ v_i\ \implies\ y_i\ \indep\ x_i\ |\ \Phi'x_i
+\end{align*}
+where $x_i = \Phi \cdot v_i + \epsilon_i$ and $\Phi$ is a $p \times K$ matrix which maps relevant information in $y_i$ to $x_i$. In our case, we map all relevant information from $G$ to $X$. Furthermore, for the case without subject effects, Taddy states that $\Phi$ can alternatively be interpreted as the \textit{population average effect} ov $v$ on $x$ which has the same interpretation as our Means encoding method. }
+
+
+
+\begin{lemm}
+\label{lemm:mnl}
+Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that $A$ in \eqref{eq:matrix_a} is left-invertible, and that $\PP{ G_{i}=g \cond X_{i}}$ is the multinomial logit distribution with coefficients $\{\theta_{g} \}_{g \in \mathcal{G}}$ containing an intercept. Then, the vector $\theta_{g} \in \mathbb{R}^{p+1}$ is sufficient in the sense of \eqref{eq:repr}:
+\begin{align}
+\mu(x, \, g) &= \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger f(\theta_g))_l}
+                     {\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger f(\theta_{g}))_{l} } \\
+&\text{where} \quad f(\theta_{g}) := (E[X_{i}\Lambda_{\theta}(G_{i}|X_{i})^{T}])_{\cdot, g}
+\end{align}
+\label{eq:}
+\end{lemm}
+
+
+
+
+
+
+
+
+
+
+
+% ----------- EXPERIMENTS --------------
+\section{Experiments}
+
+In the following section, we explore each method's effectiveness relative to one hot encoding across simulated and real world data sets. We apply two typically used methods random forests and xgboost. Both methods have a natural interpretation of separating $A_{jl}$ with splits into buckets that correspond to the different latent groups which may be similar socioeconomic status, health condition, or consumer preference.
+
+\subsection{Simulations}
+\label{sec:simulations}
+
+We consider two simulations designs that share the distributions of latent groups $L_{i}$, observable groups $G_{i}$ and covariates $X_{i}$, but whose outcome models for $Y_{i}$ differ.
+
+As an example of a real-life problem that our choice of simulation design tries to illustrate, consider the problem of predicting health outcomes $Y_{i}$ from patient characteristics $X_{i}$ and hospital $G_{i}$, with the latent groups $L_{i}$ representing the patients' unobservable health status. Depending on their health care needs, healthier patients may concentrate on different hospitals. For example, patient with chronic diseases may select larger hospitals, whereas patients with more harmless diseases may choose to visit their local clinic.
+
+\paragraph{Latent groups, observable groups and continuous covariates} Latent groups $L_{i}$ is drawn uniformly from the set of available groups, which we identify with integers.
+\begin{align}
+    L_{i} \sim \text{Uniform}(\{1,...,|\mathcal{L}|\})
+    \label{eq:latent_groups}
+\end{align}
+
+\noindent Next, observable groups $G_{i}$ are drawn according to the following rule. First, we partition the set of possible observable groups $\mathbb{G}$ into equally-sized sets $\{\mathbb{G}_{\ell}\}_{\ell=1}^{|\mathcal{L}|}$. Then, we draw the observable group $G_{i}$ so that observations that were assigned latent group $L_{1}$ have higher probability of falling into observable group $\mathbb{G}_{1}$, those in $L_{2}$ likely belong to $\mathbb{G}_{2}$, and so on. In symbols,
+\begin{align}
+    P(G_{i} = g \ | \ L_{i}) =
+        \begin{cases}
+            \frac{p_{L_{i}}}{|\mathbb{G}_{L_{i}}|}
+            \qquad \text{if}\quad g \in \mathbb{G}_{L_{i}}\\
+            \frac{1-p_{L_{i}}}{|\mathbb{G}_{L_{i}}^{C}|} \qquad \text{otherwise}
+        \end{cases}
+    \qquad
+    \text{where} \quad p_{L_{i}} > 0.5
+\end{align}
+
+Observable covariates $X_{i}$ are Normally distributed with unit variance, but some of their means are shifted depending on the latent group to which they belong.
+\begin{align}
+    (E[X_{i} | L_{i}])_{j} = \begin{cases}
+        +1 \qquad \text{with prob.}\quad 0.05 \\
+        -1 \qquad \text{with prob.}\quad 0.05 \\
+        0 \qquad \quad \text{with prob.}\quad 0.9 \\
+    \end{cases}
+    \qquad
+    Var(X_{i}|L_{i}) = I_{p \times p}
+\end{align}
+
+\paragraph{Outcomes}
+The effect of each latent group is a mean shift that is shared among the latent group.
+\begin{align}
+    \alpha_{L_{i}} &\sim \text{Uniform}([-1, 1])
+\end{align}
+
+\noindent In the \emph{linear setup}, the outcome model is described as follows.
+
+\begin{align}
+  \beta_{L_{i}} &= [U_1, \cdots, U_{\lceil 0.6p \rceil}, 0,...,0 ]^{T} \\
+  U_{k} &\sim \text{Uniform} (\{ -1, +1 \}) \\
+  Y_{i} &= X_{i}\beta_{L_{i}} + \eta_{L}\alpha_{L_i} + \epsilon
+  \qquad \epsilon \sim N(0,\sigma_{\epsilon})
+  \label{eq:linear_dgp}
+\end{align}
+
+\noindent  The parameter $\eta_{L}$ is chosen so that  $Var(\eta_{L}(\alpha_{L_i})) = Var(X_{i}\beta)$, that is, that the portion of the signal coming from the covariates and from the latent group are comparable. Lastly, $\sigma_{\epsilon}$ is adjusted so that the signal to noise ratio is kept at a fixed level.
+
+In the \emph{Interactions setup}, we introduce simple non-linearities in the outcome model via interactions between covariates and the observable group.
+
+\begin{align}
+    j_k &\sim \text{Uniform}([1,...,p]) \quad \text{for } k \in \{1, \cdots, \lfloor \sqrt{p} \rfloor \}   \\
+    \beta_k &\sim \text{Uniform}([-1,1]) \\
+    Y_{i} &=
+    \eta_{e} (X_{i,j(1)} \alpha_{L_{i}}) +
+    \sum_{k=1}^{\lfloor \sqrt{p} \rfloor} \beta_n \cdot X_{j(2k)} \cdot X_{j(2k+1)} +  \epsilon \qquad \epsilon \sim N(0, \sigma_{\epsilon})
+    \label{eq:interactions_dgp}
+\end{align}
+
+\noindent Again, similarly to the previous simulation, the parameter $\eta_{e}$ is chosen so that the variance of the first and second terms in equation \ref{eq:interactions_dgp}, and $\sigma_{\epsilon}$ is chosen so that the signal-to-noise ratio is fixed at a predetermined value.
+
+
+\subsection{Simulation Results}
+\label{sec:simulation_results}
+
+
+
+
+
+
+We simulated one hundred datasets for each combination of parameters on Table~\ref{tab:simulation_parameters}. For each simulated dataset, we estimated the outcome using the various methods described in Section \ref{sec:categorical_encoding}, and then evaluated the predictions by their mean squared error.
+
+\begin{table}[htbp]
+\centering
+\input{tables/parameters.tex}
+\caption{Simulation parameters to create grid of inputs.}
+\label{tab:simulation_parameters}
+\end{table}
+
+Results for the simulations are provided in \ref{tab:rf_sim_setups}. We find that the methods described above which seek to estimate the latent groups consistently outperform methods which require adding $|\gcal|$ additional columns for the Regression Forest and, for larger numbers of latent groups, XGBoost as well. We then find that the permutation, fisher, and multiple permutation methods are on average much better than the methods that add $|\gcal|$ columns but still slightly fall behind the methods that estimate the latent groups. Also, in most cases we find that multiple permutation does better than fisher and permutation.
+
+For the methods that do take advantage of the low rank structure, we notice that the main improvement in performance for Regression Forests occurs due to the immense reduction in dimensionality. While the performance improvements over one hot encoding for 100 observable groups ranges from 2-5\%, performance improvement can approach 15-18\% for 500 observable groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for both XGBoost and Regression Forests due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. Furthermore, we find that MNL tends to do worse which appears to be due to the fact that the underlying method requires model estimation and is therefore more data-intensive than other methods. For the XGBoost based evaluation, due to the model's ability to express more complex functions than normal tree-based methods, we find that there is little or negative benefit when adding our encoding methods when the number of latent groups is rather small. However, this changes when there are a larger number of latent groups, but not by a substantial amount.
+
+\begin{figure*}[htp]
+  \centering
+  \includegraphics[scale=0.6]{figures/rf_simulation_results_with_196se.png}
+  \caption {The percent improvement for each setup and varied latent groups and observable categories with fixed rho, signal to noise ratio, and own-group probability.}
+  \label{tab:rf_sim_setups}
+\end{figure*}
+
+
+
+\subsection{Empirical Applications}
+\label{sec:empirical_applications}
+
+We also evaluate these methods on publicly available datasets that are accessible on Kaggle. We run 4 fold, stratified cross validation on the datasets to avoid the case where there are categorical variables in the test set which are not contained in the training set.
+
+
+\paragraph{Pakistan Educational Performance}
+
+In \cite{pakistanEducation}, Hemani consolidated a series of surveys from Alif Ailaan, a nonprofit organization in Pakistan that focuses on improving education across the country. The objective of the surveys was to provide an objective means of comparing school systems across cities and provinces in order to spark competition between local governments to spur educational reform.
+
+The dataset used in the analysis below contains $n = 580$ and $504$ after removing null valued rows which can be broken down into $|\gcal| = 127$ cities from 2013 to 2016. The number of additional covariates $p$ is 20 and our estimation methodology is further elaborated on in Appendix \ref{subsec:estim}.
+
+
+\paragraph{Ames Housing}
+
+The objective of the Ames Housing Dataset \cite{de2011ames} was to act as a more complex alternative to the Boston Housing Dataset \cite{harrison1978hedonic}. De Cock's aim was to use this dataset for the final project in his regression course which would allow students to more extensively showcase what they had learned.
+
+The Ames Housing Dataset has $n=2,930$ individual home sales in Ames, Iowa from 2006 to 2010. The dataset has 80 covariates and our categorical variable ``neighborhood" has $|\gcal|=25$.
+
+\paragraph{King County House Sales}
+
+The King County House Sales Dataset from \cite{houseSalesKingCounty} is a data set containing the record of 21,613 home sales in King County, Washington between May 2014 to May 2015. The author does not provide much additional information aside from it being a good dataset to test regression models. The dataset is relatively popular with over 169,000 views and 28,000 downloads at the time of this paper.
+
+The data itself came with 21 covariates including the sale price of the house. We treat the ``zipcode'' covariate, which has $|\gcal|=70$, as the categorical variable.
+
+\begin{figure*}[htp]
+  \centering
+  \includegraphics[scale=0.6]{figures/rf_real_data_with_196se.png}
+  \caption {The percent improvement relative to one hot encoding for each new method on observational data.}
+  \label{tab:rf_sim_setups}
+\end{figure*}
+
+\subsection{Empirical Results}
+
+
+We can see that, for both XGBoost and Regression Forests, on average there is an improvement over one hot encoding. The only setting which is more consistently negative is the King County dataset. For the XGBoost simulations, we see that there is a bigger performance improvement for Ames which is a relatively higher dimensional problem compared to the "King County" and "Pakistan" datasets. For the Regression Forest based evaluation, we see that primarily the methods which provide the most dimensionality reduction are the best performers. This could be likely due to the fact that one hot encoding provides a 25-dimensional increase in the modeling problem while methods like Means and MNL add $p$ additional dimensions where $p$ is decently larger than the number of unique categories.In both setups, the rotation of the covariate space in King County appears to be unfavorable given that the low rank and sparse low rank methods are the worst performers.
+
+
+
+
+
+
+
+
+% ----------- CONCLUSION --------------
+\section{Conclusion}
+In this paper, we explore the task of mapping high cardinality categorical variables $G_i$ to a k-dimensional space without loss of information relevant to our response $Y_i$. To do this, we make an assumption about the relationship between $G_i$ and $Y_i$ which we call the \textit{sufficient latent state assumption}. This assumption provides us with the basis for creating encoding methods which can be used by universally consistent estimators to extract sufficient representations of $G_i$. Among our recommendations for encoding methods, we provide encoding methods which are interpretable or focus more on reducing the size of the  $\mathbb{R}^k$ representation. We find that these methods tend to outperform one hot encoding and other traditional approaches to modeling with categorical variables as $|\gcal|$ increases. Ultimately, we see this work as a foundation to more easily working with categorical variables as modern applications seek out signal in all forms of data.
+
+
+For future lines of research, we believe the next important task will be to figure out how to deal with more than one high cardinality categorical variable for a given prediction problem. Otherwise, additional areas of interest include more directly trying to estimate \ref{eq:psi} or using more sophisticated approaches for capturing the structure in \ref{fig:graph_simple}. Approaches include non-negative matrix factorization or objective functions potentially similar to \ref{eq:sparse_pca} with constraints to generate probability matrices. Finally, we also aim to further explore more methods in natural language processing and their interpretations in settings with high cardinality categorical variables.
+
+
+
+
+
+
+
+
+
+
+% ----------- APPENDIX --------------
+\section{Appendix}
+
+\subsection{Proof of Lemma \ref{lemm:repr}}
+
+\begin{proof}\label{proof:suff}
+To show the equivalence of \ref{eq:mu} and \ref{eq:explicit}, we begin by expanding \ref{eq:mu} as
+\begin{equation}
+\mu(x, \, g)
+&= \sum_{l=1}^L \EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} \PP{L_i = l \cond X_i = x, \, G_i=g}
+\label{eq:mu2}
+\end{equation}
+
+\noindent Now, the conditional independence assumptions encoded in our graph imply that the expectation term simplifies to
+\begin{equation}
+\EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} = \EE{Y_i \cond X_i = x, \ L_i = l}
+\end{equation}
+
+\noindent while the second term can be rewritten using Bayes rule as
+\begin{equation}
+\PP{L_i = l \cond X_i = x, \, G_i=g}
+&= \frac{ \PP{X_{i}=x \cond L_{i}=l} \PP{L=l \cond G_{i}=g}  }
+        {\sum_{l'=1}^{L} \PP{X_{i}=x \cond L_{i}=l'} \PP{L=l' | G_{i}=g} }
+\end{equation}
+
+Combining the above, we see that the mapping $\mu$ only depends on the categorical variable through the function $\psi^{*}(g) = \PP{L=l' | G_{i}=g}$. Therefore, $\psi^{*}(g)$ it is a sufficient representation as defined in (\ref{eq:repr}).
+\end{proof}
+
+
+\subsection{Proof of Lemma \ref{lemm:means}}
+
+\begin{proof}
+\label{proof:means}
+Begin by noting that conditioanl expectations can be computed as a linear combination of the sufficient statistics discussed in Lemma \ref{lemm:repr}.
+\begin{align}
+    \EE{ X_{i} \cond G_{i} = g}
+    &= \sum_{l=1}^{K} \EE{X_{i} \cond L_{i} = l} \PP{L_{i} = l \cond G_{i} = g} \\
+    &= \sum_{l=1}^{K} \EE{X_{i} \cond L_{i} = l} \psi_{l}(g)
+    \label{eq:scalar_decomposition}
+\end{align}
+
+\noindent or, in matrix form,
+\begin{align}
+    \Omega = A\Psi
+    \label{eq:matrix_decomposition}
+\end{align}
+
+\noindent where these matrices are defined as
+
+\begin{align}
+    \Omega &=
+    \begin{bmatrix}
+        \EE{X_{1} \cond G=g_{1}} & \cdots & \EE{X_{1} \cond G=g_{M}} \\
+                \vdots     &  \ddots &  \\
+        \EE{X_{p} \cond G=g_{1}} & \cdots & \EE{X_{p} \cond G=g_{M}} \\
+    \end{bmatrix}_{p\times M}
+    \label{eq:matrix_omega}
+\\
+    A &=
+    \begin{bmatrix}
+        \EE{X_{1} \cond L=l_{1}} & \cdots & \EE{X_{1} \cond L=l_{K}} \\
+                \vdots     &  \ddots &  \\
+        \EE{X_{p} \cond L=l_{1}} & \cdots & \EE{X_{p} \cond L=l_{K}} \\
+    \end{bmatrix}_{p\times K}
+    \label{eq:matrix_a}
+\\
+    \Psi &=
+    \begin{bmatrix}
+        \PP{L = l_{1} \cond G=g_{1}} & \cdots & \PP{L = l_{1} \cond G=g_{M}} \\
+                \vdots     &  \ddots &  \\
+        \PP{L = l_{K} \cond G=g_{1}} & \cdots & \PP{ L = l_{K} \cond G=g_{M}} \\
+    \end{bmatrix}_{K\times M}
+    \label{eq:matrix_psi}
+\end{align}
+
+The sufficient representation for the category $\psi(g) = \Psi_{g}$ lies on the linear span of the set of columns of $A$. Since $A$ has a left-inverse $A^\dagger$ such that $A^\dagger A = I$, we can retrieve the representations by matrix multiplication.
+\begin{align}
+    \psi(g) = (\Psi)_{\cdot, g} = A^\dagger(\Omega)_{\cdot, g} =: A^\dagger \omega(g)
+    \label{eq:omega_inverse}
+\end{align}
+
+Since $\omega(g)$ is also a sufficient representation for the categories.
+\end{proof}
+
+\subsection{Proof of Lemma \ref{lemm:mnl}}
+
+The coefficients $\hat{\theta}$ satisfies the multinomial logit maximum likelihood problem
+\begin{align}
+  \hat{\theta} = \arg\max_{\theta} \frac{1}{n} \sum_{i} \log \Lambda_{\theta}(G_{i}| X_{i})
+  \label{eq:mnl_obj}
+\end{align}
+
+
+
+
+\noindent The first-order conditions for each coefficient, for each component of the sum \eqref{eq:mnl_obj} is
+\begin{align}
+  \partial_{\theta_{tj}} \log \Lambda_{\theta}(G_{i} | X_{i}) =
+  \begin{cases}
+      X_{it} - \Lambda_{\theta}(j | X_{i})X_{it} \qquad &\text{If $G_{i} = j$, i.e if $i$ belongs to the $j$ category} \\
+      0 - \Lambda_{\theta}(j | X_{i})X_{it} \qquad &\text{otherwise} \\
+  \end{cases}
+\end{align}
+
+\noindent More succintly, the coefficients must satisfy the following $p \times M$ system of equations
+\begin{align}
+  \frac{1}{n}\sum_{i} X_{i} D_{i}^{T} = \frac{1}{n} \sum_{i}X_{i}\Lambda_{\theta}(\cdot |X_{i})^{T}
+  \label{eq:mnl_foc1}
+\end{align}
+\noindent where $D_{i}$ is the $M \times 1$ one-hot encoding of observation $i$'s observable category (i.e., an $M \times 1$ vector that has $M-1$ zeros and a $1$ in the entry corresponding to $G_{i}$). The expression $\Lambda_{\theta}(\cdot|X_{i})$ represents the $M \times 1$ vector of multinomial logistic probabilities for each category.
+
+Asymptotically, the $(t,j)^{th}$ entry of the object on the left-hand side of \eqref{eq:mnl_foc1} converges in probability to
+\begin{align}
+  E[X_{it}1\{G_{i} = j\}] = E[X_{it}|G_{i}=j]P(G_{i} = j)
+  \label{eq:mnl_foc1_left}
+\end{align}
+
+\noindent Meanwhile, the corresponding entry on the right-hand side converges to
+\begin{align}
+  E[X_{it}\Lambda_{\theta}(G_{i} = j|X_{i})]
+  \label{eq:mnl_foc1_right}
+\end{align}
+
+\noindent In matrix form, these can be written as
+\begin{align}
+  \Omega \Gamma = E[X_{i}\Lambda_{\theta}(\cdot |X_{i})]
+  \label{eq:mnl_matrix}
+\end{align}
+
+\noindent where $\Omega$ that was defined in \eqref{eq:matrix_omega}, and $\Gamma$ is an $M \times M$ diagonal entries such that $\Gamma_{gg} = P(G_{i} = g)$. Now, the decomposition \eqref{eq:matrix_decomposition} allows us to rewrite \eqref{eq:mnl_matrix} as
+\begin{align}
+  \Psi = A^\dagger E[X_{i}\Lambda_{\theta}(\cdot|X_{i})^{T}] S^{-1}
+  \label{eq:mnl_repr}
+\end{align}
+\noindent provided that $A$ has full column rank.
+
+
+Therefore, following Lemma \ref{lemm:repr} again, the $g^{th}$ column of the matrix on the right-hand side of \eqref{eq:mnl_repr} is a sufficient representation for category $g$.
+
+\begin{align}
+    \Psi = A^\dagger E[X_{i}\Lambda_{\theta}(\cdot|X_{i})^{T}] \propto A^{\dagger}E[X_{i}\exp(X_{i}\theta_{g})]
+    \label{eq:mnl_propto}
+\end{align}
+
+
+
+
+
+
+\subsection{Additional Encoding Methods}{\label{app:encodings}}
+
+For a more in-depth treatment, see \cite{venables2016codingmatrices}. Note that several of the methods below are simple linear transformations of each other and should yield equivalent levels of performance in theory. However, as we will see in sections \ref{sec:simulation_results} and \ref{sec:empirical_applications}, in practice the resulting performance can differ substantially.
+
+\paragraph{One-hot or dummy} This is the most common categorical encoding, and it is the method we take to be our main baseline, against which we will compare all other methods. It expands out the categorical column into $k-1$ columns where $k$ is the number of unique elements in the set of categorical levels in the column. Each column is binary 1 or 0 depending on whether the corresponding level was observed in the original categorical column. \citep[~sec 2.3.2]{murphy2012machine}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& b & c & d & e \\
+		\hline
+		a & 0 & 0 & 0 & 0 \\
+		b & 1 & 0 & 0 & 0 \\
+		c & 0 & 1 & 0 & 0 \\
+		d & 0 & 0 & 1 & 0 \\
+		e & 0 & 0 & 0 & 1 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\paragraph{Deviation} Similar to one-hot encoding except that the $k^{th}$ unique element's row that is the reference level is now set to all values of $-1$. This means that categorical levels are being compared to the grand mean of all of the levels instead of the mean of a given level with respect to the reference level.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& b & c & d & e \\
+		\hline
+		a & 1 & 0 & 0 & 0 \\
+		b & 0 & 1 & 0 & 0 \\
+		c & 0 & 0 & 1 & 0 \\
+		d & 0 & 0 & 0 & 1 \\
+		e & -1 & -1 & -1 & -1 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+\paragraph{Difference} Compares a given level to the mean of the levels that precede it.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& b & c & d & e \\
+		\hline
+		a & -0.5 &-0.333& -0.25& -0.2\\
+		b &  0.5 &-0.333& -0.25& -0.2\\
+		c &  0.0 & 0.667& -0.25& -0.2\\
+		d & 0.0 & 0.000 & 0.75 &-0.2\\
+		e &  0.0&  0.000&  0.00&  0.8\\
+		\hline
+	\end{tabular}
+\end{table}
+
+\paragraph{Helmert} Compares levels of a chosen categorical variable to the mean of the subsequent levels uniquely observed thus far.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& b & c & d & e \\
+		\hline
+		a & 0.80 & 0.00 & 0.00 & 0.00 \\
+		b & -0.20 & 0.75 & 0.00 & 0.00 \\
+		c & -0.20 & -0.25 & 0.67 & 0.00 \\
+		d & -0.20 & -0.25 & -0.33 & 0.50 \\
+		e & -0.20 & -0.25 & -0.33 & -0.50 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+\paragraph{Repeated Effect} Columns are encoded to represent a cumulative comparison of subsequent levels with previous ones.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& b & c & d & e \\
+		\hline
+		a & 0.8 & 0.6 & 0.4 & 0.2\\
+		b & -0.2 & 0.6 & 0.4&  0.2\\
+		c & -0.2& -0.4 & 0.4 & 0.2\\
+		d & -0.2 &-0.4& -0.6&  0.2\\
+		e & -0.2& -0.4& -0.6 &-0.8\\
+		\hline
+	\end{tabular}
+\end{table}
+
+\paragraph{Permutation} Assigns a unique integer to each category. Note that even when the categories do not possess an intrinsic ordering, some mappings may yield better results if they happen to be aligned with the true average effect the category has on the outcome variable.
+
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& perm  \\
+		\hline
+		a & 5  \\
+		b & 3  \\
+		c & 4  \\
+		d & 1 \\
+		e & 2  \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+
+\paragraph{Multi-Permutation (Multi-Perm)} Following the intuition above, with a larger number of columns we might find more interesting permutations. Hence, we also experiment with four random integer mappings at once.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{rrrrr}
+		\hline
+		& perm1 & perm2 & perm3 & perm4 \\
+		\hline
+		a & 1 & 5 & 4 & 2 \\
+		b & 2 & 3 & 5 & 3 \\
+		c & 3 & 1 & 2 & 4 \\
+		d & 4 & 4 & 1 & 1 \\
+		e & 5 & 2 & 3 & 5 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\paragraph{Fisher} taken from \cite{hastie2009elements}, we order the categories by increasing mean of the response.\\
+
+For the following five methods, we use information about the continuous covariates to construct the mapping $\psi$.
+
+\subsection{Estimation details}\label{subsec:estim}
+
+Below we provide additional details to better clarify how new methods related to Means were estimated and remove basic problems in the data that complicate training models.
+
+For PCA Means, we select the first $k$ principal components which generate 95\% of the variance in $X$, group by the unique categorical levels, and take the means of those principal components $z_{1:k}$. For SPCA Means, we use the default hyperparameters in the ``sparsepca" R package. %For IR-PCA Means, we create an 80-20 train-test split, apply PCA on the train set's probability output matrix and evaluate the performance of adding $p/2$ and $p/4$ principle components as opposed to the one hot encoding. From here, we choose the number of principle components with the lower mean squared error.
+
+In the Ames dataset, we remove the features ``PoolQC", ``GarageQual", and ``GarageYrBlt" due to almost being perfectly correlated with other features and remove the missing data rows as well. In the King County House Sales dataset, we remove the ID and date of the house sale as the covariates. Finally, in the Pakistan dataset, many of the covariates are almost perfectly correlated such as ``\% girls enrolled", ``\% boys enrolled", and ``gender parity score." As a result, we removed such covariates resulting in the following list of covariates: Education score, Toilet, Province, Population, School infrastructure score, Total number of schools, Primary Schools with single teacher, Primary Schools with single classroom, Pakistan Economic Growth, Number of secondary schools, Electricity, No Facility, City, Global Terrorism Index - Pakistan, Complete Primary Schools, Building condition satisfactory, Drone attacks in Pakistan, Drinking water, Boundary wall, Bomb Blasts Occurred, \% Complete Primary Schools, \% Boys Enrolled.
+
+
+
+%  we run PCA and utilize an 80-20 train-test split on the training data to select either $\tfrac{1}{2} \cdot p$ or $\tfrac{1}{4} \cdot p$ principal components where $p$ is the number of covariates in $X_i$.
+
+%We remove all missing data rows which primarily existed in the Ames data set and select a subset of the input covariates for the Pakistan data set in order to reduce the number of perfectly correlated or almost perfectly correlated variables that frequently occurred in the data.
+
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
