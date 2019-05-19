@@ -66,9 +66,6 @@ fisher_encode <- function(X,G,Y){
   return(CM)
 }
 
-nums <- unlist(lapply(cm, is.numeric))  
-
-
 means_encode <- function(X,G){
   CM <- aggregate(X,list(X[,G]),mean)
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
@@ -206,12 +203,3 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
 
     return(f)
 }
-
-
-
-
-
-
-
-
-
