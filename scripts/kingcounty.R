@@ -5,7 +5,10 @@ library(tidyverse)
 library(grf)
 library(glmnet)
 library(sufrep)
+library(sparsepca)
 
+source("dgp.R")
+source("utils.R")
 
 model = "regression_forest"
 folds = 4

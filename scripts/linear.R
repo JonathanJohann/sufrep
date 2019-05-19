@@ -1,27 +1,32 @@
 
+rm(list=ls())
 
-library(levels)
 library(tidyverse)
 library(xgboost)
 library(glmnet)
 library(sufrep)
+library(sparsepca)
+
+source("dgp.R")
+source("utils.R")
+
 config <- expand.grid(
   setup="linear",
-  num_groups=c(2,10),
+  num_groups=c(10),
   n=c(5000),
   p=c(20),
-  rhos=c(0.25),#rhos=c(0.25,0.5),
-  num_trees=c(200),
-  noise_ratio=c(0.5),#c(1,0.5,0.25,0.1),
+  rhos=c(0.25),
+  num_trees=c(2000),
+  noise_ratio=c(0.5),
   iterations=1,
   signal_fraction=c(0.5),
-  comp_percent=c(0.9),#c(1.0,0.9,0.6),
-  num_levels=c(100,500),
+  comp_percent=c(0.9),
+  num_levels=c(500),
   num_interactions=c(1)
 )
 
 
-config <- config[sample(c(1:dim(config)[1]),size=4,replace=FALSE),]#config[c(1,(shuffled.indices+1)),]
+config <- config[sample(c(1:dim(config)[1]),size=1,replace=FALSE),]
 
 encodings <- c("MNL","one_hot","multi_permutation","permutation",
                "difference","helmert","fisher","deviation",
@@ -51,6 +56,8 @@ walk(seq(dim(config)[1]), function(i) {
     print("Starting...")
     train = data.frame(sim_data$TRAIN %>% dplyr::mutate_at("A",fix_factors))
     test = data.frame(sim_data$TEST %>% dplyr::mutate_at("A",fix_factors))
+    test = test[-which(test$A %in% c(which(table(train$A)<4))),]
+    train = train[which(train$A==which(table(train$A)<4)),]
     for(ii in 1:13){
       if(encodings[ii]=="fisher"){
         mses[ii] <- evaluate(method=encodings[ii],train=train,test=test,categorical = "A",response="Y",Y="Y")
@@ -59,9 +66,6 @@ walk(seq(dim(config)[1]), function(i) {
       } else {
         mses[ii] <- evaluate(method=encodings[ii],train=train,test=test,categorical = "A",response="Y")
       }
-      #get_mse(setup=encodings[ii],
-                  #        dataset=sim_data,
-                  #        group="A",num.trees=cfg$num_trees,num.threads=1)
       print(ii)
     }
 
@@ -72,7 +76,7 @@ walk(seq(dim(config)[1]), function(i) {
   }) %>% bind_rows()
 
   # Write to csv
-  filename <- paste("Z57PAPER_RF_",cfg$setup,"_n", cfg$n,
+  filename <- paste(cfg$setup,"_n", cfg$n,
                     "_p",cfg$p,
                     "_rhos",cfg$rhos,
                     "_snr", cfg$noise_ratio,
