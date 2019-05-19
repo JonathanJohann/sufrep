@@ -66,6 +66,9 @@ fisher_encode <- function(X,G,Y){
   return(CM)
 }
 
+nums <- unlist(lapply(cm, is.numeric))  
+
+
 means_encode <- function(X,G){
   CM <- aggregate(X,list(X[,G]),mean)
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
@@ -74,6 +77,10 @@ means_encode <- function(X,G){
 
 low_rank_encode <- function(X,G,num_components){
   CM <- means_encode(X,G)
+  CM <- as.data.frame(CM)
+  for(i in 1:dim(CM)[2]){
+    CM[,i] <- as.numeric(CM[,i])
+  }
   CM <- as.matrix(CM)
   decomp <- tryCatch({svd(CM)},
                      error=function(e){
@@ -89,6 +96,10 @@ low_rank_encode <- function(X,G,num_components){
 sparse_low_rank_encode <- function(X,G,num_components){
 
   CM <- means_encode(X,G)
+  CM <- as.matrix(CM)
+  for(i in 1:dim(CM)[2]){
+    CM[,i] <- as.numeric(CM[,i])
+  }
   CM <- as.matrix(CM)
   decomp <- tryCatch({sparsepca::spca(CM,verbose=FALSE)},
                      error=function(e){
