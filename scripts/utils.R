@@ -30,6 +30,7 @@ evaluate <- function(train,test,
 }
 
 
+
 evaluate_method <- function(df,categorical,response,k=10,seeds=1,model="regression_forest",stratify=TRUE){
   output <- c()
   seed_val <- time_seed()
