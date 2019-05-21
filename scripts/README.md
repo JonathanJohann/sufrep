@@ -9,8 +9,8 @@ library(xgboost)
 library(glmnet)
 library(sufrep)
 
-source(dgp.R)
-source(utils.R)
+source("dgp.R")
+source("utils.R")
 
 model = "regression_forest"
 sim_data <- make_dataset(setup="linear",n=5000,p=20,
@@ -33,8 +33,8 @@ library(xgboost)
 library(glmnet)
 library(sufrep)
 
-source(dgp.R)
-source(utils.R)
+source("dgp.R")
+source("utils.R")
 
 model = "regression_forest"
 folds = 4
