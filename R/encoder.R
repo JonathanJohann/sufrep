@@ -121,12 +121,9 @@ sparse_low_rank_encode <- function(X,G,num_components){
 
 
 permutation_encode <- function(k,num_permutations=1){
-  set.seed(time_seed())
-  CM <- data.frame(E1 = sample(k,size=k,replace=FALSE))
+  CM <- data.frame(sample(k,size=k,replace=FALSE))
   if(num_permutations>1){
-    mm <- time_seed()
     for(i in 2:num_permutations){
-      set.seed(time_seed()*i %% mm)
       CM <- cbind(CM,data.frame(sample(k,size=k,replace=FALSE)))
     }
   }
