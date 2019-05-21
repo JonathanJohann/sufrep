@@ -66,7 +66,11 @@ fisher_encode <- function(X,G,Y){
   return(CM)
 }
 
+
 means_encode <- function(X,G){
+  for(i in 1:dim(X)[2]){
+    X[,i] <- as.numeric(X[,i])
+  }
   CM <- aggregate(X,list(X[,G]),mean)
   colnames(CM) <- paste("E",1:dim(CM)[2],sep="")
   return(CM)
@@ -130,8 +134,19 @@ permutation_encode <- function(k,num_permutations=1){
   return(CM)
 }
 
+demean <- function(X){
+  df <- data.frame(X)
+  demean_int <- sapply(df,is.integer)
+  demean_num <- sapply(df,is.numeric)
+  for(i in 1:dim(df)[2]){
+    if(demean_int[[i]]||demean_num[[i]]){
+      df[,i] <- df[,i] - mean(df[,i])
+    }
+  }
+  return(df)
+}
 mnl_encode <- function(X,G,k,folds=3){
-
+  X <- demean(X)
   categorical_names <- which(colnames(X) %in% c(G))
   train.Y <- as.matrix(X[,categorical_names])
   train.X <- as.matrix(X[,-categorical_names])
@@ -203,3 +218,12 @@ encoder <- function(X, G = "A", Y=NULL, num_components = NULL, num_folds=4, meth
 
     return(f)
 }
+
+
+
+
+
+
+
+
+
