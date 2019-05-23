@@ -148,7 +148,7 @@ mnl_encode <- function(X,G,k,folds=3){
   train.Y <- as.matrix(X[,categorical_names])
   train.X <- as.matrix(X[,-categorical_names])
   fold_cat <- category_stratify(train.Y,num_folds=folds)
-  labels <- matrix(0,ncol=length(train.Y))
+  labels <- matrix(0,ncol=dim(X)[1])
   for(j in 1:folds){
     labels[,fold_cat[[j]]] <- j
   }
