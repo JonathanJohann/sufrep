@@ -13,7 +13,7 @@ source("utils.R")
 config <- expand.grid(
   setup="linear",
   num_groups=c(10),
-  n=c(5000),
+  n=c(10000),
   p=c(20),
   rhos=c(0.25),
   num_trees=c(2000),
@@ -56,8 +56,7 @@ walk(seq(dim(config)[1]), function(i) {
     print("Starting...")
     train = data.frame(sim_data$TRAIN %>% dplyr::mutate_at("A",fix_factors))
     test = data.frame(sim_data$TEST %>% dplyr::mutate_at("A",fix_factors))
-    test = test[-which(test$A %in% c(which(table(train$A)<4))),]
-    train = train[which(train$A==which(table(train$A)<4)),]
+
     for(ii in 1:13){
       if(encodings[ii]=="fisher"){
         mses[ii] <- evaluate(method=encodings[ii],train=train,test=test,categorical = "A",response="Y",Y="Y")
