@@ -80,3 +80,4 @@ tmp_*
 *.e[0-9]
 *.o[0-9]
 *_out
+.Rproj.user
