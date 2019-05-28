@@ -99,14 +99,14 @@ evaluate_method <- function(df,categorical,response,k=10,model="regression_fores
       print(methods[q])
     }
 
-    new_row <- c(nrow(df), model, seed_val, j, mses)
+    new_row <- c(nrow(df), model, j, mses)
     output <- rbind(output, new_row)
     print(paste("Done with -- ",j,sep=""))
   }
   colnames(output) <- c("file", "model", "fold", "one_hot", "multi_perm",
                         "add_means", "add_svd", "add_spca", "add_pax_weight", "perm",
                         "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")
-  saveRDS(output, file = paste("Evaluation_", k, i, "_", seed_val, ".rds", sep = ""))
+  saveRDS(output, file = paste("Evaluation_", k, i, "_",time_seed(), ".rds", sep = ""))
   return(data.frame(output))
 
 }
