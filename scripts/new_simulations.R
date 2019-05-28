@@ -123,7 +123,9 @@ create_response <- function(X,alpha,beta,type="global"){
 
 
 
-simulation <- function(p,k,nl,ng,pl,type="global"){
+simulation <- function(p,k,nl,ng,pl,type="global",seed=NULL){
+  if(is.null(seed)){seed = time_seed()}
+  set.seed(seed)
   u = sample_mu(k,p)
   X = sample_points(u,nl)
   a = sample_alpha(k)

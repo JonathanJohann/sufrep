@@ -31,91 +31,82 @@ evaluate <- function(train,test,
 
 
 
-evaluate_method <- function(df,categorical,response,k=10,seeds=1,model="regression_forest",stratify=TRUE){
+evaluate_method <- function(df,categorical,response,k=10,model="regression_forest",stratify=TRUE){
   output <- c()
-  seed_val <- time_seed()
-  set.seed(seed_val)
   randomized_df <- df[sample(nrow(df)), ]
   methods <- c("one_hot","multi_permutation","means","low_rank",
                "sparse_low_rank","MNL","permutation","difference",
                "deviation","repeated_effect","helmert","fisher",
                "simple_effect")
-  for (i in 1:seeds) {
-    seed_val <- time_seed()
-    set.seed(seed_val)
+  total_indices <- 1:nrow(df)
 
-    total_indices <- 1:nrow(df)
+  categ <- c(randomized_df %>% dplyr::mutate_at(categorical,as.character)
+             %>% dplyr::mutate_at(categorical,as.numeric)
+             %>% dplyr::select(categorical))
 
-    categ <- c(randomized_df %>% dplyr::mutate_at(categorical,as.character)
-               %>% dplyr::mutate_at(categorical,as.numeric)
-               %>% dplyr::select(categorical))
+  fold_cat <- category_stratify(categ[[1]],num_folds=k)
 
-    fold_cat <- category_stratify(categ[[1]],num_folds=k)
+  for (j in 1:k) {
+    testIndexes <- fold_cat[[j]]
+    testData <- randomized_df[testIndexes, ]
+    trainData <- randomized_df[-testIndexes, ]
+    mses <- c()
+    for (q in 1:13){
 
-    for (j in 1:k) {
-      testIndexes <- fold_cat[[j]]
-      testData <- randomized_df[testIndexes, ]
-      trainData <- randomized_df[-testIndexes, ]
-      mses <- c()
-      for (q in 1:13){
+      if(methods[q] %in% c("low_rank","sparse_low_rank")){
+        cv_vals <- c(5,10,15)
+        folds <- 3
+        cv_mses <- c()
+        randomized_df2 <- trainData[sample(nrow(trainData)), ]
+        rownames(randomized_df2) <- NULL
+        fold_cat2 <- category_stratify(randomized_df2[,categorical],num_folds=folds)
+        for(ii in 1:length(cv_vals)){
+          print("Running CV...")
+          cv_mse <- c()
+          for(jj in 1:folds){
+            testIndexes2 <- fold_cat2[[jj]]
+            testData2 <- randomized_df2[testIndexes2, ]
+            trainData2 <- randomized_df2[-testIndexes2, ]
 
-        if(methods[q] %in% c("low_rank","sparse_low_rank")){
-          cv_vals <- c(5,10,15)
-          folds <- 3
-          cv_mses <- c()
-          set.seed(time_seed())
-          randomized_df2 <- trainData[sample(nrow(trainData)), ]
-          rownames(randomized_df2) <- NULL
-          fold_cat2 <- category_stratify(randomized_df2[,categorical],num_folds=folds)
-          for(ii in 1:length(cv_vals)){
-            print("Running CV...")
-            cv_mse <- c()
-            for(jj in 1:folds){
-              testIndexes2 <- fold_cat2[[jj]]
-              testData2 <- randomized_df2[testIndexes2, ]
-              trainData2 <- randomized_df2[-testIndexes2, ]
+            train.X2 <- trainData2[,-which(colnames(trainData2) %in% c(response))]
+            enc <- encoder(X=train.X2,G=categorical,num_components=cv_vals[ii],model=model)
 
-              train.X2 <- trainData2[,-which(colnames(trainData2) %in% c(response))]
-              enc <- encoder(X=train.X2,G=categorical,num_components=cv_vals[ii],model=model)
-
-              trainData2 <- enc(trainData2)
-              testData2 <- enc(testData2)
-              if(model=="regression_forest"){
-                cv_mse <- c(mse,get_forest_mse(trainData2,testData2))
-              }
-              else{
-                cv_mse <- c(mse,get_xgboost_mse(trainData2,testData2))
-              }
+            trainData2 <- enc(trainData2)
+            testData2 <- enc(testData2)
+            if(model=="regression_forest"){
+              cv_mse <- c(mse,get_forest_mse(trainData2,testData2))
             }
-            cv_mses <- c(cv_mses,mean(cv_mse))
+            else{
+              cv_mse <- c(mse,get_xgboost_mse(trainData2,testData2))
+            }
           }
-          mx <- which(cv_mses==min(cv_mses))[1]
-          num_components <- cv_vals[mx]
-          mse <- evaluate(method=methods[q],train=trainData,test=testData,
-                          categorical=categorical,response=response,
-                          model=model,Y=response,num_components=num_components)
+          cv_mses <- c(cv_mses,mean(cv_mse))
         }
-
-        else{
-          mse <- evaluate(method=methods[q],train=trainData,test=testData,
-                          categorical=categorical,response=response,
-                          model=model,Y=response)
-        }
-
-        print(mse)
-        mses <- c(mses,mse)
-        print(methods[q])
+        mx <- which(cv_mses==min(cv_mses))[1]
+        num_components <- cv_vals[mx]
+        mse <- evaluate(method=methods[q],train=trainData,test=testData,
+                        categorical=categorical,response=response,
+                        model=model,Y=response,num_components=num_components)
+      }
+      else{
+        mse <- evaluate(method=methods[q],train=trainData,test=testData,
+                        categorical=categorical,response=response,
+                        model=model,Y=response)
       }
 
-      new_row <- c(nrow(df), model, seed_val, j, mses)
-      output <- rbind(output, new_row)
-      print(paste("Done with -- ",j,sep=""))
+      print(mse)
+      mses <- c(mses,mse)
+      print(methods[q])
     }
-    colnames(output) <- c("file", "model", "seed", "fold", "one_hot", "multi_perm",
-                          "add_means", "add_svd", "add_spca", "add_pax_weight", "perm",
-                          "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")
-    saveRDS(output, file = paste("Evaluation_", k, "_seed", i, "_", seed_val, ".rds", sep = ""))
+
+    new_row <- c(nrow(df), model, seed_val, j, mses)
+    output <- rbind(output, new_row)
+    print(paste("Done with -- ",j,sep=""))
   }
+  colnames(output) <- c("file", "model", "fold", "one_hot", "multi_perm",
+                        "add_means", "add_svd", "add_spca", "add_pax_weight", "perm",
+                        "difference", "deviation", "repeated", "helmert", "fisher","simple_effect")
+  saveRDS(output, file = paste("Evaluation_", k, i, "_", seed_val, ".rds", sep = ""))
   return(data.frame(output))
 
 }

@@ -28,7 +28,7 @@ for(i in 1:8){
   cfg <- config[i,]
   df <- simulation(p=cfg$p,k=cfg$k,
                    nl=cfg$Nl,ng=cfg$Ng,
-                   pl=cfg$Pl,type=cfg$type)
+                   pl=cfg$Pl,type=cfg$type,seed=seed)
   result = evaluate_method(df,categorical="G",response="Y",k=4,model=model)
   result[,"seed"] <- seed
   filename <- paste(model,"_",cfg$type,"type_",cfg$k,"k_",
