@@ -13,9 +13,9 @@ source("utils.R")
 model = "regression_forest"
 
 config <- expand.grid(
-  k=c(2,10),
+  k=c(5,10),
   Nl=1000,
-  Ng=c(10,50),
+  Ng=c(50,100),
   Pl=0.9,
   p=20,
   type=c("global","latent")
@@ -31,6 +31,8 @@ for(i in 1:8){
                    pl=cfg$Pl,type=cfg$type,seed=seed)
   result = evaluate_method(df,categorical="G",response="Y",k=4,model=model)
   result[,"seed"] <- seed
+  result[,"model"] <- model
+  result <- cbind(result,cfg)
   filename <- paste(model,"_",cfg$type,"type_",cfg$k,"k_",
                     cfg$Nl,"Nl_",cfg$Ng,"Ng_",
                     cfg$Pl,"Pl_",cfg$p,"p_",

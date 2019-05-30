@@ -26,21 +26,34 @@ Nl = 1000
 Ng = 50
 Pl = 0.9
 p = 20
-sample_mu <- function(k,p){
-  mu = matrix(sample(c(-1,0,1),
-                     size=k*p,
-                     replace=TRUE),
-              nrow=k,ncol=p)
+sample_mu <- function(k,p,shifts=3){
+  mu = matrix(0,nrow=k,ncol=p)
+  # Adding number of shifts feature
+  #================================
+  for(i in 1:k){
+    shift <- sample(c(-1,1),size=shifts,replace=TRUE)
+    indices <- sample(p,size=shifts,replace=FALSE)
+    mu[i,indices] <- shift
+  }
   return(mu)
 }
 
-sample_points <- function(mu,nl){
+sample_points <- function(mu,nl,rho){
   k <- dim(mu)[1]
   p <- dim(mu)[2]
   X <- c()
+  # Adding correlation feature
+  #=============================
+  sigma <- toeplitz(rho^seq(0,(p-1)))
   for(i in 1:k){
-    Xl <- MASS::mvrnorm(nl,mu=mu[i,],Sigma=diag(p))
+    Xl <- MASS::mvrnorm(nl,mu=mu[i,],Sigma=sigma)
     X <- rbind(X,cbind(Xl,rep(i,nl)))
+  }
+
+  # Normalize X
+  #==================
+  for(i in 1:p){
+    X[,i] <- (X[,i]-mean(X[,i]))/sd(X[,i])
   }
   colnames(X) <- c(paste("X",1:p,sep=""),"L")
   return(X)
@@ -123,11 +136,11 @@ create_response <- function(X,alpha,beta,type="global"){
 
 
 
-simulation <- function(p,k,nl,ng,pl,type="global",seed=NULL){
+simulation <- function(p,k,nl,ng,pl,rho=0.25,type="global",seed=NULL){
   if(is.null(seed)){seed = time_seed()}
   set.seed(seed)
   u = sample_mu(k,p)
-  X = sample_points(u,nl)
+  X = sample_points(u,nl,rho)
   a = sample_alpha(k)
   if(type=="global"){
     b = sample_beta_global(p)
