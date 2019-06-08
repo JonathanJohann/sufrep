@@ -710,67 +710,22 @@ Since $\omega(g)$ is also a sufficient representation for the categories.
 
 \subsection{Proof of Lemma \ref{lemm:mnl}}
 
-The coefficients $\hat{\theta}$ satisfies the multinomial logit maximum likelihood problem
-\begin{align}
-  \hat{\theta} = \arg\max_{\theta} \frac{1}{n} \sum_{i} \log \Lambda_{\theta}(G_{i}| X_{i})
-  \label{eq:mnl_obj}
-\end{align}
-
-
-
-
-\noindent The first-order conditions for each coefficient, for each component of the sum \eqref{eq:mnl_obj} is
-\begin{align}
-  \partial_{\theta_{tj}} \log \Lambda_{\theta}(G_{i} | X_{i}) =
-  \begin{cases}
-      X_{it} - \Lambda_{\theta}(j | X_{i})X_{it} \qquad &\text{If $G_{i} = j$, i.e if $i$ belongs to the $j$ category} \\
-      0 - \Lambda_{\theta}(j | X_{i})X_{it} \qquad &\text{otherwise} \\
-  \end{cases}
-\end{align}
-
-\noindent More succintly, the coefficients must satisfy the following $p \times M$ system of equations
-\begin{align}
-  \frac{1}{n}\sum_{i} X_{i} D_{i}^{T} = \frac{1}{n} \sum_{i}X_{i}\Lambda_{\theta}(\cdot |X_{i})^{T}
-  \label{eq:mnl_foc1}
-\end{align}
-\noindent where $D_{i}$ is the $M \times 1$ one-hot encoding of observation $i$'s observable category (i.e., an $M \times 1$ vector that has $M-1$ zeros and a $1$ in the entry corresponding to $G_{i}$). The expression $\Lambda_{\theta}(\cdot|X_{i})$ represents the $M \times 1$ vector of multinomial logistic probabilities for each category.
-
-Asymptotically, the $(t,j)^{th}$ entry of the object on the left-hand side of \eqref{eq:mnl_foc1} converges in probability to
-\begin{align}
-  E[X_{it}1\{G_{i} = j\}] = E[X_{it}|G_{i}=j]P(G_{i} = j)
-  \label{eq:mnl_foc1_left}
-\end{align}
-
-\noindent Meanwhile, the corresponding entry on the right-hand side converges to
-\begin{align}
-  E[X_{it}\Lambda_{\theta}(G_{i} = j|X_{i})]
-  \label{eq:mnl_foc1_right}
-\end{align}
-
-\noindent In matrix form, these can be written as
-\begin{align}
-  \Omega \Gamma = E[X_{i}\Lambda_{\theta}(\cdot |X_{i})]
-  \label{eq:mnl_matrix}
-\end{align}
-
-\noindent where $\Omega$ that was defined in \eqref{eq:matrix_omega}, and $\Gamma$ is an $M \times M$ diagonal entries such that $\Gamma_{gg} = P(G_{i} = g)$. Now, the decomposition \eqref{eq:matrix_decomposition} allows us to rewrite \eqref{eq:mnl_matrix} as
-\begin{align}
-  \Psi = A^\dagger E[X_{i}\Lambda_{\theta}(\cdot|X_{i})^{T}] S^{-1}
-  \label{eq:mnl_repr}
-\end{align}
-\noindent provided that $A$ has full column rank.
-
-
-Therefore, following Lemma \ref{lemm:repr} again, the $g^{th}$ column of the matrix on the right-hand side of \eqref{eq:mnl_repr} is a sufficient representation for category $g$.
+We begin by noting that we can use Bayes' theorem to express $\omega(g) = \EE{ X_{i} \cond G=g }$ as a function of $\PP{G=g \cond X_{i} }$, here is assumed to be multinomial logit.
 
 \begin{align}
-    \Psi = A^\dagger E[X_{i}\Lambda_{\theta}(\cdot|X_{i})^{T}] \propto A^{\dagger}E[X_{i}\exp(X_{i}\theta_{g})]
-    \label{eq:mnl_propto}
+  \EE[X|G] { X_{i} \cond G_{i} = g }
+  &=  \EE[X] { X_{i} \PP{X_{i} | G_{i} = g} }  \\
+  &= \frac{\EE[X]{ X_{i} \PP{G_{i} = g|X_{i}}}}{\PP{G_{i} = g}} \label{eq:mnl_bayes} \\
+  &= \frac{\EE[X]{ X_{i} \PP{G_{i} = g|X_{i}}}}{\EE[X] { \PP{G_{i} = g \cond X_{i}}}}  \\
+  &= \frac{\EE[X]{ X_{i} \Lambda_{\theta}(g|X_{i}} }{ \EE[X]{\Lambda_{\theta}( g | X_{i})}}  \label{eq:mnl_logit}
 \end{align}
 
+\noindent However, note that expression \eqref{eq:mnl_logit} only depends on the category through the mutinomial logit coefficients $\theta_{g}$ that are associate with category $g$. Therefore, under this assumption we can write $\omega(g) = f(\theta_g) =: E[X_{i} | G=g]$. However, recall from \eqref{eq:omega_inverse} that if the matrix $(A)_{j\ell} := E[X_{ij} | L_{i}=\ell]$ has a left-inverse $A^{\dagger}A = I$, we can write
+\begin{align}
+A^\dagger \omega(g) = A^\dagger f(\theta_{g}) = \psi(g)
+\end{align}
 
-
-
+\noindent Therefore, $\theta_{g}$ is also a sufficient representation.
 
 
 \subsection{Additional Encoding Methods}{\label{app:encodings}}
