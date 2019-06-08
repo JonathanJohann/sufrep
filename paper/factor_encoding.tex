@@ -417,15 +417,15 @@ is left-invertible. Then, the $k$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \subsection{Encoding by multinomial logistic regression coefficients}
 \label{subsec:mnl}
 
-For our third and last method, we propose estimating the conditional probability of category membership by multinomial logistic regression parametrized by coefficients $\{\theta_{g} \}_{g \in \mathcal{G}}$ (including an intercept)
+Finally, we propose estimating the conditional probability of category membership by multinomial logistic regression parametrized by coefficients $\{\theta_{g} \}_{g \in \mathcal{G}}$
 \begin{align}
-P(G_{i}|X_{i}) = \Lambda_{\theta}(G_{i}=g | X_{i}) =  \frac{\exp(\tilde{X}_{i}^{T} \theta_{g})}{\sum_{g'}\exp(\tilde{X}_{i}^{T}\theta_{g'})} \qquad \tilde{X}_{i} := (1, X_{i})
+P(G_{i}|X_{i}) = \Lambda_{\theta}(G_{i}=g | X_{i}) =  \frac{\exp(X_{i}^{T} \theta_{g})}{\sum_{g'}\exp(X_{i}^{T}\theta_{g'})}
 \label{eq:mnl}
 \end{align}
 
-\noindent and then use the $(p+1)$-dimensional vector of coefficients associated with $g^{th}$ category to represent it.
+\noindent and then use the $p$-dimensional vector of coefficients associated with $g^{th}$ category to represent it.
 
-The main inspiration for this method is the natural language processing \emph{word2vec} model first presented by \cite{mikolov2013efficient}. In that work, the authors propose two methods to represent words (categories) in a large corpus as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we consider the continuous vectors $\tilde{X}_{i} := (1, X_{i})$ as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $\tilde{X}_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
+The main inspiration for this method is the natural language processing \emph{word2vec} model first presented by \cite{mikolov2013efficient}. In that work, the authors propose two methods to represent words (categories) in a large corpus as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we consider the continuous vectors $X_{i}$ as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $X_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
 
 
 {\color{red} Our method can also be seen to be a variation on the \emph{inverse regression} method of \cite{taddy2014heterogeneous}. Those authors make the following proposition:
@@ -438,13 +438,12 @@ where $x_i = \Phi \cdot v_i + \epsilon_i$ and $\Phi$ is a $p \times K$ matrix wh
 
 \begin{lemm}
 \label{lemm:mnl}
-Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that $A$ in \eqref{eq:matrix_a} is left-invertible, and that $\PP{ G_{i}=g \cond X_{i}}$ is the multinomial logit distribution with coefficients $\{\theta_{g} \}_{g \in \mathcal{G}}$ containing an intercept. Then, the vector $\theta_{g} \in \mathbb{R}^{p+1}$ is sufficient in the sense of \eqref{eq:repr}:
+Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that $A$ in \eqref{eq:matrix_a} is left-invertible, and that $\PP{ G_{i}=g \cond X_{i}}$ is the multinomial logit distribution with coefficients $\{\theta_{g} \}_{g \in \mathcal{G}}$ containing an intercept. Then, the vector $\theta_{g} \in \mathbb{R}^{p}$ is sufficient in the sense of \eqref{eq:repr}:
 \begin{align}
 \mu(x, \, g) &= \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger f(\theta_g))_l}
                      {\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger f(\theta_{g}))_{l} } \\
-&\text{where} \quad f(\theta_{g}) := (E[X_{i}\Lambda_{\theta}(G_{i}|X_{i})^{T}])_{\cdot, g}
+&\text{where} \quad f(\theta_{g}) := \frac{\EE[X]{ X_{i}\Lambda_{\theta}(g|X_{i})}}{\EE[X]{\Lambda_{\theta}(g|X_{i})}}
 \end{align}
-\label{eq:}
 \end{lemm}
 
 
