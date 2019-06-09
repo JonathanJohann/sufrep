@@ -423,16 +423,24 @@ P(G_{i}|X_{i}) = \Lambda_{\theta}(G_{i}=g | X_{i}) =  \frac{\exp(X_{i}^{T} \thet
 \label{eq:mnl}
 \end{align}
 
-\noindent and then use the $p$-dimensional vector of coefficients associated with $g^{th}$ category to represent it.
+\noindent and then use the $p$-dimensional vector of coefficients $\theta_{g}$ associated with $g^{th}$ category to represent it. The motivation for this method comes from the fact that the prediction model $\mu(x, g)$ can be rewritten so that it only depends on the category $g$ through $P(G_{i}=g|X_{i}=x)$, and under the  multinomial logistic regression assumption above this boils down to dependence on the coefficients $\theta_{g}$.
 
-The main inspiration for this method is the natural language processing \emph{word2vec} model first presented by \cite{mikolov2013efficient}. In that work, the authors propose two methods to represent words (categories) in a large corpus as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we consider the continuous vectors $X_{i}$ as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $X_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/mnl.pdf}
+  \caption{Implementation example of the \emph{mnl} encoding.}
+  \label{fig:lowrank_encoding}
+\end{figure}
 
 
-{\color{red} Our method can also be seen to be a variation on the \emph{inverse regression} method of \cite{taddy2014heterogeneous}. Those authors make the following proposition:
-\begin{align*}
-    y_i\ \indep\ x_i\ |\ v_i\ \implies\ y_i\ \indep\ x_i\ |\ \Phi'x_i
-\end{align*}
-where $x_i = \Phi \cdot v_i + \epsilon_i$ and $\Phi$ is a $p \times K$ matrix which maps relevant information in $y_i$ to $x_i$. In our case, we map all relevant information from $G$ to $X$. Furthermore, for the case without subject effects, Taddy states that $\Phi$ can alternatively be interpreted as the \textit{population average effect} ov $v$ on $x$ which has the same interpretation as our Means encoding method. }
+A related work that also uses regression coefficients as categorical representations is the natural language processing \emph{word2vec} model of \cite{mikolov2013efficient}. In that work, the authors propose two methods to represent words (categories) in a large corpus as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we consider the continuous vectors $X_{i}$ as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $X_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
+
+
+% {\color{red} Our method can also be seen to be a variation on the \emph{inverse regression} method of \cite{taddy2014heterogeneous}. Those authors make the following proposition:
+% \begin{align*}
+%     y_i\ \indep\ x_i\ |\ v_i\ \implies\ y_i\ \indep\ x_i\ |\ \Phi'x_i
+% \end{align*}
+% where $x_i = \Phi \cdot v_i + \epsilon_i$ and $\Phi$ is a $p \times K$ matrix which maps relevant information in $y_i$ to $x_i$. In our case, we map all relevant information from $G$ to $X$. Furthermore, for the case without subject effects, Taddy states that $\Phi$ can alternatively be interpreted as the \textit{population average effect} ov $v$ on $x$ which has the same interpretation as our Means encoding method. }
 
 
 
@@ -622,51 +630,9 @@ For future lines of research, we believe the next important task will be to figu
 % ----------- APPENDIX --------------
 \section{Appendix}
 
-\subsection{Proof of Lemma \ref{lemm:repr}}
+\subsection{Proofs}
 
-\begin{proof}\label{proof:suff}
-To show the equivalence of \ref{eq:mu} and \ref{eq:explicit}, we begin by expanding \ref{eq:mu} as
-\begin{equation}
-\mu(x, \, g)
-&= \sum_{l=1}^L \EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} \PP{L_i = l \cond X_i = x, \, G_i=g}
-\label{eq:mu2}
-\end{equation}
-
-\noindent Now, the conditional independence assumptions encoded in our graph imply that the expectation term simplifies to
-\begin{equation}
-\EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} = \EE{Y_i \cond X_i = x, \ L_i = l}
-\end{equation}
-
-\noindent while the second term can be rewritten using Bayes rule as
-\begin{equation}
-\PP{L_i = l \cond X_i = x, \, G_i=g}
-&= \frac{ \PP{X_{i}=x \cond L_{i}=l} \PP{L=l \cond G_{i}=g}  }
-        {\sum_{l'=1}^{L} \PP{X_{i}=x \cond L_{i}=l'} \PP{L=l' | G_{i}=g} }
-\end{equation}
-
-Combining the above, we see that the mapping $\mu$ only depends on the categorical variable through the function $\psi^{*}(g) = \PP{L=l' | G_{i}=g}$. Therefore, $\psi^{*}(g)$ it is a sufficient representation as defined in (\ref{eq:repr}).
-\end{proof}
-
-
-\subsection{Proof of Lemma \ref{lemm:means}}
-
-\begin{proof}
-\label{proof:means}
-Begin by noting that conditioanl expectations can be computed as a linear combination of the sufficient statistics discussed in Lemma \ref{lemm:repr}.
-\begin{align}
-    \EE{ X_{i} \cond G_{i} = g}
-    &= \sum_{l=1}^{K} \EE{X_{i} \cond L_{i} = l} \PP{L_{i} = l \cond G_{i} = g} \\
-    &= \sum_{l=1}^{K} \EE{X_{i} \cond L_{i} = l} \psi_{l}(g)
-    \label{eq:scalar_decomposition}
-\end{align}
-
-\noindent or, in matrix form,
-\begin{align}
-    \Omega = A\Psi
-    \label{eq:matrix_decomposition}
-\end{align}
-
-\noindent where these matrices are defined as
+We begin by defining the following matrices that will be used in all proofs below.
 
 \begin{align}
     \Omega &=
@@ -694,17 +660,61 @@ Begin by noting that conditioanl expectations can be computed as a linear combin
     \label{eq:matrix_psi}
 \end{align}
 
-The sufficient representation for the category $\psi(g) = \Psi_{g}$ lies on the linear span of the set of columns of $A$. Since $A$ has a left-inverse $A^\dagger$ such that $A^\dagger A = I$, we can retrieve the representations by matrix multiplication.
+\subsubsection{Proof of Lemma \ref{lemm:repr}}
+
+\begin{proof}\label{proof:suff}
+To show the equivalence of \eqref{eq:mu} and \eqref{eq:explicit}, we begin by expanding \eqref{eq:mu} as
+\begin{equation}
+\mu(x, \, g)
+&= \sum_{l=1}^L \EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} \PP{L_i = l \cond X_i = x, \, G_i=g}
+\label{eq:mu2}
+\end{equation}
+
+\noindent Now, the conditional independence assumptions encoded in our graph imply that the expectation term simplifies to
+\begin{equation}
+\EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} = \EE{Y_i \cond X_i = x, \ L_i = l}
+\end{equation}
+
+\noindent while the second term can be rewritten using Bayes rule as
+\begin{equation}
+\PP{L_i = l \cond X_i = x, \, G_i=g}
+&= \frac{ \PP{X_{i}=x \cond L_{i}=l} \PP{L=l \cond G_{i}=g}  }
+        {\sum_{l'=1}^{k} \PP{X_{i}=x \cond L_{i}=l'} \PP{L=l' | G_{i}=g} }
+\end{equation}
+
+Combining the above, we see that the mapping $\mu$ only depends on the categorical variable through the function $\psi(g) = \PP{L=l' | G_{i}=g}$. Therefore, $\psi(g)$ is a sufficient representation as defined in \eqref{eq:repr}.
+\end{proof}
+
+
+\subsubsection{Proof of Lemma \ref{lemm:means}}
+
+\begin{proof}
+\label{proof:means}
+Begin by noting that conditioanl expectations can be computed as a linear combination of the sufficient statistics discussed in Lemma \ref{lemm:repr}.
+\begin{align}
+    \EE{ X_{i} \cond G_{i} = g}
+    &= \sum_{l=1}^{K} \EE{X_{i} \cond L_{i} = l} \PP{L_{i} = l \cond G_{i} = g} \\
+    &= \sum_{l=1}^{K} \EE{X_{i} \cond L_{i} = l} \psi_{l}(g)
+    \label{eq:scalar_decomposition}
+\end{align}
+
+\noindent or, in matrix form,
+\begin{align}
+    \Omega = A\Psi
+    \label{eq:matrix_decomposition}
+\end{align}
+
+\noindent where these matrices are defined as in the top of this section. The sufficient representation for the category $\psi(g) = \Psi_{g}$ lies on the linear span of the set of columns of $A$. Since $A$ has a left-inverse $A^\dagger$ such that $A^\dagger A = I$, we can retrieve the representations by matrix multiplication.
 \begin{align}
     \psi(g) = (\Psi)_{\cdot, g} = A^\dagger(\Omega)_{\cdot, g} =: A^\dagger \omega(g)
     \label{eq:omega_inverse}
 \end{align}
 
-Since $\omega(g)$ is also a sufficient representation for the categories.
+\noindent Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega(g)$ is also a sufficient representation for the category $g$.
 \end{proof}
 
-\subsection{Proof of Lemma \ref{lemm:mnl}}
-
+\subsubsection{Proof of Lemma \ref{lemm:mnl}}
+\begin{proof}
 We begin by noting that we can use Bayes' theorem to express $\omega(g) = \EE{ X_{i} \cond G=g }$ as a function of $\PP{G=g \cond X_{i} }$, here is assumed to be multinomial logit.
 
 \begin{align}
@@ -717,11 +727,11 @@ We begin by noting that we can use Bayes' theorem to express $\omega(g) = \EE{ X
 
 \noindent However, note that expression \eqref{eq:mnl_logit} only depends on the category through the mutinomial logit coefficients $\theta_{g}$ that are associate with category $g$. Therefore, under this assumption we can write $\omega(g) = f(\theta_g) =: E[X_{i} | G=g]$. However, recall from \eqref{eq:omega_inverse} that if the matrix $(A)_{j\ell} := E[X_{ij} | L_{i}=\ell]$ has a left-inverse $A^{\dagger}A = I$, we can write
 \begin{align}
-A^\dagger \omega(g) = A^\dagger f(\theta_{g}) = \psi(g)
+\psi(g) = A^\dagger \omega(g) = A^\dagger f(\theta_{g})
 \end{align}
 
-\noindent Therefore, $\theta_{g}$ is also a sufficient representation.
-
+\noindent Since $\psi(g)$ only depends on $g$ through $\theta(g)$, it follows that $\theta(g)$ is also a sufficient representation for the category $g$.
+\end{proof}
 
 \subsection{Additional Encoding Methods}{\label{app:encodings}}
 
