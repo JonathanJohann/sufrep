@@ -12,16 +12,12 @@
 **/.pytest_cache/**
 
 # Image files and documentation.
+**.ai
 **.jpg
 **.png
 **.tiff
 **.pdf
 
-# But allow for local figures
-!/latex/**
-!/latex/**.png
-!/latex/**.tex
-!/latex/**.pdf
 
 # Python.
 __pycache__/
@@ -53,6 +49,9 @@ docs/source/savefig
 *.out
 *.toc
 *.fls
+*.bbl
+*.blg
+
 
 # PyCharm.
 .idea/
