@@ -223,4 +223,3 @@ get_forest_mse <- function(train_data, test_data, ...) {
 fix_factors <- function(x) {
   return(as.numeric(as.character(x)))
 }
-

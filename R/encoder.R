@@ -1,50 +1,44 @@
-one_hot_encode <- function(k) {
-  CM <- data.frame(diag(k))
-  colnames(CM) <- paste("E", 1:k, sep = "")
+one_hot_encode <- function(num_categ) {
+  CM <- data.frame(diag(num_categ))
   return(CM)
 }
 
-helmert_encode <- function(k) {
-  CM <- stats::contr.helmert(k)
-  colnames(CM) <- paste("E", 1:(k - 1), sep = "")
-
+helmert_encode <- function(num_categ) {
+  CM <- stats::contr.helmert(num_categ)
   return(CM)
 }
 
-deviation_encode <- function(k) {
-  CM <- stats::contr.sum(k)
-  colnames(CM) <- paste("E", 1:(k - 1), sep = "")
+deviation_encode <- function(num_categ) {
+  CM <- stats::contr.sum(num_categ)
   return(CM)
 }
 
-repeated_effect_encode <- function(k) {
-  TH <- matrix(0, nrow = k, ncol = k)
-  TH <- matrix((k - col(TH)) / k, nrow = k, ncol = k)
+repeated_effect_encode <- function(num_categ) {
+  TH <- matrix(0, nrow = num_categ, ncol = num_categ)
+  TH <- matrix((num_categ - col(TH)) / num_categ, nrow = num_categ, ncol = num_categ)
   TH[lower.tri(TH)] <- 0
-  BH <- matrix(-col(TH) / k, nrow = k, ncol = k)
+  BH <- matrix(-col(TH) / num_categ, nrow = num_categ, ncol = num_categ)
   BH[upper.tri(BH)] <- 0
   diag(BH) <- 0
   CM <- TH + BH
-  CM <- CM[, 1:(k - 1)]
-  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
+  CM <- CM[, 1:(num_categ - 1)]
   return(CM)
 }
 
-difference_encode <- function(k) {
-  CM <- matrix(0, nrow = k, ncol = k)
-  CM <- matrix(-1 / (col(CM) + 1), nrow = k, ncol = k)
+difference_encode <- function(num_categ) {
+  CM <- matrix(0, nrow = num_categ, ncol = num_categ)
+  CM <- matrix(-1 / (col(CM) + 1), nrow = num_categ, ncol = num_categ)
   CM[lower.tri(CM)] <- 0
-  CM <- CM[, 1:(k - 1)]
+  CM <- CM[, 1:(num_categ - 1)]
   CM[row(CM) == (col(CM) + 1)] <- -apply(CM, 2, sum)
-  colnames(CM) <- paste("E", 1:(k - 1), sep = "")
   return(CM)
 }
 
-simple_effect_encode <- function(k) {
-  CM <- matrix(-1 / k, nrow = k, ncol = k)
-  CM <- CM + diag(k)
-  CM <- CM[, 1:(k - 1)]
-  colnames(CM) <- paste("E", 1:(k - 1), sep = "")
+simple_effect_encode <- function(num_categ) {
+  CM <- matrix(-1 / num_categ, nrow = num_categ, ncol = num_categ)
+  CM <- CM + diag(num_categ)
+  CM <- CM[, 1:(num_categ - 1)]
+  colnames(CM) <- paste("E", 1:(num_categ - 1), sep = "")
   return(CM)
 }
 
@@ -56,17 +50,12 @@ fisher_encode <- function(X, G, Y) {
   colnames(ordering) <- "ORD"
   CM <- CM[order(ordering$ORD), ]
   CM <- data.frame(CM$X1)
-  colnames(CM) <- paste("E1", sep = "")
   return(CM)
 }
 
 
 means_encode <- function(X, G) {
-  for (i in 1:dim(X)[2]) {
-    X[, i] <- as.numeric(X[, i])
-  }
   CM <- aggregate(X, list(X[, G]), mean)
-  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
   return(CM)
 }
 
@@ -87,7 +76,6 @@ low_rank_encode <- function(X, G, num_components) {
 
   np <- min(num_components, dim(decomp$u)[2])
   CM <- data.frame(decomp$u[, 1:np])
-  colnames(CM) <- paste("E", 1:np, sep = "")
   return(CM)
 }
 
@@ -103,8 +91,7 @@ sparse_low_rank_encode <- function(X, G, num_components) {
   },
   error = function(e) {
     return(sparsepca::spca(CM[, colSums(!is.finite(CM)) == 0]))
-  }
-  )
+  })
 
   np <- min(num_components, dim(decomp$loadings)[2])
   U <- decomp$loadings[, 1:np]
@@ -117,95 +104,100 @@ sparse_low_rank_encode <- function(X, G, num_components) {
   }
   )
   CM <- data.frame(CM)
-  colnames(CM) <- paste("E", 1:np, sep = "")
   return(CM)
 }
 
 
-permutation_encode <- function(k, num_permutations = 1) {
-  CM <- data.frame(sample(k, size = k, replace = FALSE))
+permutation_encode <- function(num_categ, num_permutations = 1) {
+  CM <- data.frame(sample(num_categ, size = num_categ, replace = FALSE))
   if (num_permutations > 1) {
     for (i in 2:num_permutations) {
-      CM <- cbind(CM, data.frame(sample(k, size = k, replace = FALSE)))
+      CM <- cbind(CM, data.frame(sample(num_categ, size = num_categ, replace = FALSE)))
     }
   }
   colnames(CM) <- paste("E", 1:num_permutations, sep = "")
   return(CM)
 }
 
-demean <- function(X) {
-  df <- data.frame(X)
-  demean_int <- sapply(df, is.integer)
-  demean_num <- sapply(df, is.numeric)
-  for (i in 1:dim(df)[2]) {
-    if (demean_int[[i]] || demean_num[[i]]) {
-      df[, i] <- df[, i] - mean(df[, i])
-    }
-  }
-  return(df)
-}
-mnl_encode <- function(X, G, k, folds = 3) {
-  X <- demean(X)
-  categorical_names <- which(colnames(X) %in% c(G))
-  train.Y <- as.matrix(X[, categorical_names])
-  train.X <- as.matrix(X[, -categorical_names])
-  fold_cat <- category_stratify(train.Y, num_folds = folds)
-  labels <- matrix(0, ncol = dim(X)[1])
-  for (j in 1:folds) {
-    labels[, fold_cat[[j]]] <- j
-  }
-  remainder <- which(labels == 0)
-  labels[, remainder] <- sample(c(1:folds), size = length(remainder), replace = TRUE)
 
-  fit <- cv.glmnet(x = train.X, y = train.Y, foldid = labels, family = "multinomial")
-  coef_vals <- coef(fit, s = "lambda.1se")
-  CM <- data.frame(matrix(0, ncol = length(colnames(train.X))))
-  colnames(CM) <- colnames(train.X)
-  all_cols <- colnames(CM)
-  for (i in 1:k) {
-    tmp <- tryCatch({
-      as.data.frame(as.matrix(t(coef_vals[[i]])))
-    }, error = function(e) {
-      return(CM[1, ])
-    })
-    tmp_cols <- colnames(tmp)
-    needed <- all_cols[-which(tmp_cols %in% all_cols)]
-    if (length(needed) > 0) {
-      for (l in 1:length(needed)) {
-        tmp[, needed[l]] <- 0
-      }
-    }
-    CM <- rbind(CM, tmp[, all_cols])
-  }
+mnl_encode <- function(X, G, num_folds = 3) {
 
-  CM <- CM[-1, ]
-  rownames(CM) <- NULL
-  colnames(CM) <- paste("E", 1:dim(CM)[2], sep = "")
+  # Fit glmnet using stratified K-fold cv
+  df <- data.frame(X=X, G=G)
+  cv_index <- caret::createFolds(factor(training$G), num_folds)
+  tc <- caret::trainControl(index = cv_index, method = 'cv', number = num_folds)
+  glmnet_fit <- caret::train(G ~ ., data = df, method = "glmnet",
+                             trControl = tc, family= "multinomial")
+  model <- glmnet_fit$finalModel
+  sparse_coef <- coef(model, s=model$lambdaOpt)
+
+  # Retrieve coefficients
+  dense_coef <- lapply(sparse_coef, as.matrix)
+  thetahat <- data.frame(dense_coef)
+  colnames(thetahat) <- names(dense_coef)
+  rownames(thetahat) <- NULL
   return(CM)
 }
 
+
+validate_X <- function(X) {
+  if (!all(sapply(X, is.numeric))) {
+    stop("Argument X contains columns that are not numeric.")
+  }
+}
+
+
+validate_G < function(X) {
+
+}
+
+validate_options <- function(method, Y, num_components, num_permutations, num_folds) {
+  if ((method != "fisher") && (!is.null(Y))) {
+    stop("Only method 'fisher' requires Y.")
+  }
+  if (!(method %in% c("low_rank", "sparse_low_rank")) && (!is.null(Y))) {
+    stop("Only methods 'low_rank' and 'sparse_low_rank' requires num_components.")
+  }
+  if ((method != "multi_permutation") && (!is.null(Y))) {
+    stop("Only method 'multi_permutation' requires num_permutations.")
+  }
+  # etc.
+}
+
+
 #' @export
-encoder <- function(X, G = "A", Y = NULL, num_components = NULL, num_folds = 4, method = "one_hot", ...) {
-  id <- data.frame(unique(X[, G]))
-  colnames(id) <- G
-  k <- dim(id)[1]
+encoder <- function(method, X, G,
+                    prefix = "E",
+                    Y = NULL,
+                    num_components = NULL,
+                    num_permutations = NULL,
+                    num_folds = 3) {
+
+  validate_X(X)
+  validate_G(G)
+  validate_options(method, Y, num_components, num_permutations, num_folds)
+
+  id <- data.frame(G=unique(G))
+  num_categ <- dim(id)[1]
+  n <- dim(X)[1]
+  p <- dim(X)[2]
 
   CM <- switch(method,
-    one_hot = one_hot_encode(k),
-    helmert = helmert_encode(k),
-    deviation = deviation_encode(k),
-    repeated_effect = repeated_effect_encode(k),
-    difference = difference_encode(k),
-    simple_effect = simple_effect_encode(k),
+    one_hot = one_hot_encode(num_categ),
+    helmert = helmert_encode(num_categ),
+    deviation = deviation_encode(num_categ),
+    repeated_effect = repeated_effect_encode(num_categ),
+    difference = difference_encode(num_categ),
+    simple_effect = simple_effect_encode(num_categ),
     fisher = fisher_encode(X, G, Y),
     means = means_encode(X, G),
-    low_rank = low_rank_encode(X, G, num_components = num_components),
-    sparse_low_rank = sparse_low_rank_encode(X, G, num_components = num_components),
-    permutation = permutation_encode(k, num_permutations = 1),
-    multi_permutation = permutation_encode(k, num_permutations = (dim(X)[2] - 1)),
-    MNL = mnl_encode(X, G, k)
+    low_rank = low_rank_encode(X, G, num_components),
+    sparse_low_rank = sparse_low_rank_encode(X, G, num_components),
+    permutation = permutation_encode(num_categ, num_permutations = 1),
+    multi_permutation = permutation_encode(num_categ, num_permutations),
+    mnl = mnl_encode(X, G, num_folds)
   )
-
+  colnames(CM) <- paste(prefix, 1:dim(CM)[2], sep = "")
   map <- data.frame(cbind(id, CM))
 
 
