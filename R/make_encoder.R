@@ -54,7 +54,9 @@ fisher_encode <- function(X, G, Y) {
 
 
 means_encode <- function(X, G) {
-  CM <- as.matrix(aggregate(X, list(X[, G]), mean))
+  p <- dim(X)[2]
+  CM <- as.matrix(aggregate(X, list(G), mean)[,2:(p + 1)])
+  colnames(CM) <- NULL
   return(CM)
 }
 
@@ -83,6 +85,9 @@ sparse_low_rank_encode <- function(X, G, num_components) {
 
 
 permutation_encode <- function(num_categ, num_perms) {
+  if (is.null(num_perms)) {
+    stop("When 'method' is 'multi_permutation', argument 'num_permutations' must not be null.")
+  }
   CM <- replicate(num_perms, sample(num_categ, size = num_categ, replace = FALSE))
   return(CM)
 }
@@ -92,7 +97,7 @@ mnl_encode <- function(X, G, num_folds) {
 
   # Fit glmnet using stratified K-fold cv
   df <- data.frame(X=X, G=G)
-  cv_index <- caret::createFolds(factor(training$G), num_folds)
+  cv_index <- caret::createFolds(factor(df$G), num_folds)
   tc <- caret::trainControl(index = cv_index, method = 'cv', number = num_folds)
   glmnet_fit <- caret::train(G ~ ., data = df, method = "glmnet",
                              trControl = tc, family= "multinomial")
@@ -136,7 +141,7 @@ validate_options <- function(method, Y, num_components, num_permutations, num_fo
 
 
 #' @export
-make_make_encoder <- function(method, X, G,
+make_encoder <- function(method, X, G,
                          prefix = "E",
                          Y = NULL,
                          num_components = NULL,
@@ -163,7 +168,7 @@ make_make_encoder <- function(method, X, G,
     means = means_encode(X, G),
     low_rank = low_rank_encode(X, G, num_components),
     sparse_low_rank = sparse_low_rank_encode(X, G, num_components),
-    permutation = permutation_encode(num_categ, num_permutations = 1),
+    permutation = permutation_encode(num_categ, 1),
     multi_permutation = permutation_encode(num_categ, num_permutations),
     mnl = mnl_encode(X, G, num_folds)
   )
@@ -174,7 +179,7 @@ make_make_encoder <- function(method, X, G,
     validate_G(G)
 
     # Augment original matrix
-    X_aug <- cbind(X, CM[G,])
+    X_aug <- cbind(X, CM[as.integer(G),])
 
     # Maintain X type
     if (is.data.frame(X)) {

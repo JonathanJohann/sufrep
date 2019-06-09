@@ -15,7 +15,7 @@ evaluate <- function(train,test,
   }
 
 
-  enc <- encoder(X=train.X,G=categorical,method=method,...)
+  enc <- make_encoder(X=train.X,G=categorical,method=method,...)
   train <- enc(train)
   test <- enc(test)
 
@@ -69,7 +69,7 @@ evaluate_method <- function(df,categorical,response,k=10,model="regression_fores
             trainData2 <- randomized_df2[-testIndexes2, ]
 
             train.X2 <- trainData2[,-which(colnames(trainData2) %in% c(response))]
-            enc <- encoder(X=train.X2,G=categorical,num_components=cv_vals[ii],model=model)
+            enc <- make_encoder(X=train.X2,G=categorical,num_components=cv_vals[ii],model=model)
 
             trainData2 <- enc(trainData2)
             testData2 <- enc(testData2)
@@ -126,12 +126,6 @@ time_seed <- function() {
   as.integer((as.numeric(Sys.time()) * 1e+07)%%1e+07)
 }
 
-
-
-
-scale_vals <- function(x){
-  (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
-}
 
 
 category_stratify <- function(categories,num_folds=4){
