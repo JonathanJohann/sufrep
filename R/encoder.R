@@ -1,5 +1,5 @@
 one_hot_encode <- function(num_categ) {
-  CM <- data.frame(diag(num_categ))
+  CM <- diag(num_categ)[,1:(num_categ-1)]
   return(CM)
 }
 
@@ -38,89 +38,57 @@ simple_effect_encode <- function(num_categ) {
   CM <- matrix(-1 / num_categ, nrow = num_categ, ncol = num_categ)
   CM <- CM + diag(num_categ)
   CM <- CM[, 1:(num_categ - 1)]
-  colnames(CM) <- paste("E", 1:(num_categ - 1), sep = "")
   return(CM)
 }
 
 fisher_encode <- function(X, G, Y) {
-  CM <- aggregate(X[, Y], list(X[, G]), mean)
+  CM <- aggregate(Y, list(G), mean)
   colnames(CM) <- c("label", "X1")
   CM$X1 <- rank(CM$X1)
-  ordering <- data.frame(unique(X[, G]))
+  ordering <- data.frame(unique(G))
   colnames(ordering) <- "ORD"
   CM <- CM[order(ordering$ORD), ]
-  CM <- data.frame(CM$X1)
+  CM <- as.matrix(CM$X1)
   return(CM)
 }
 
 
 means_encode <- function(X, G) {
-  CM <- aggregate(X, list(X[, G]), mean)
+  CM <- as.matrix(aggregate(X, list(X[, G]), mean))
   return(CM)
 }
+
 
 low_rank_encode <- function(X, G, num_components) {
+  if (num_components > dim(X)[2]) {
+    stop("Argument num_components cannot be larger than number of X columns.")
+  }
   CM <- means_encode(X, G)
-  CM <- as.data.frame(CM)
-  for (i in 1:dim(CM)[2]) {
-    CM[, i] <- as.numeric(CM[, i])
-  }
-  CM <- as.matrix(CM)
-  decomp <- tryCatch({
-    svd(CM)
-  },
-  error = function(e) {
-    return(svd(CM[, colSums(!is.finite(CM)) == 0]))
-  }
-  )
-
-  np <- min(num_components, dim(decomp$u)[2])
-  CM <- data.frame(decomp$u[, 1:np])
+  decomp <- svd(CM)
+  CM <- as.matrix(decomp$u[, 1:num_components])
   return(CM)
 }
+
 
 sparse_low_rank_encode <- function(X, G, num_components) {
+  if (num_components > dim(X)[2]) {
+    stop("Argument num_components cannot be larger than number of X columns.")
+  }
   CM <- means_encode(X, G)
-  CM <- as.matrix(CM)
-  for (i in 1:dim(CM)[2]) {
-    CM[, i] <- as.numeric(CM[, i])
-  }
-  CM <- as.matrix(CM)
-  decomp <- tryCatch({
-    sparsepca::spca(CM, verbose = FALSE)
-  },
-  error = function(e) {
-    return(sparsepca::spca(CM[, colSums(!is.finite(CM)) == 0]))
-  })
-
-  np <- min(num_components, dim(decomp$loadings)[2])
-  U <- decomp$loadings[, 1:np]
-  CM <- as.matrix(CM)
-  CM <- tryCatch({
-    CM %*% U
-  },
-  error = function(e) {
-    return(CM[, colSums(!is.finite(CM)) == 0] %*% U)
-  }
-  )
-  CM <- data.frame(CM)
+  decomp <- sparsepca::spca(CM, verbose = FALSE)
+  U <- decomp$loadings[, 1:num_components]
+  CM <-  CM %*% U
   return(CM)
 }
 
 
-permutation_encode <- function(num_categ, num_permutations = 1) {
-  CM <- data.frame(sample(num_categ, size = num_categ, replace = FALSE))
-  if (num_permutations > 1) {
-    for (i in 2:num_permutations) {
-      CM <- cbind(CM, data.frame(sample(num_categ, size = num_categ, replace = FALSE)))
-    }
-  }
-  colnames(CM) <- paste("E", 1:num_permutations, sep = "")
+permutation_encode <- function(num_categ, num_perms) {
+  CM <- replicate(num_perms, sample(num_categ, size = num_categ, replace = FALSE))
   return(CM)
 }
 
 
-mnl_encode <- function(X, G, num_folds = 3) {
+mnl_encode <- function(X, G, num_folds) {
 
   # Fit glmnet using stratified K-fold cv
   df <- data.frame(X=X, G=G)
@@ -133,9 +101,9 @@ mnl_encode <- function(X, G, num_folds = 3) {
 
   # Retrieve coefficients
   dense_coef <- lapply(sparse_coef, as.matrix)
-  thetahat <- data.frame(dense_coef)
-  colnames(thetahat) <- names(dense_coef)
+  thetahat <- as.matrix(t(as.data.frame(dense_coef)))
   rownames(thetahat) <- NULL
+  colnames(thetahat) <- NULL
   return(CM)
 }
 
@@ -147,8 +115,10 @@ validate_X <- function(X) {
 }
 
 
-validate_G < function(X) {
-
+validate_G <- function(G) {
+  if (!is.factor(G)) {
+    stop("Argument G must be factor.")
+  }
 }
 
 validate_options <- function(method, Y, num_components, num_permutations, num_folds) {
@@ -166,22 +136,22 @@ validate_options <- function(method, Y, num_components, num_permutations, num_fo
 
 
 #' @export
-encoder <- function(method, X, G,
-                    prefix = "E",
-                    Y = NULL,
-                    num_components = NULL,
-                    num_permutations = NULL,
-                    num_folds = 3) {
+make_make_encoder <- function(method, X, G,
+                         prefix = "E",
+                         Y = NULL,
+                         num_components = NULL,
+                         num_permutations = NULL,
+                         num_folds = 3) {
 
+  # Type validation
   validate_X(X)
   validate_G(G)
+
+  # Argument validation
   validate_options(method, Y, num_components, num_permutations, num_folds)
 
-  id <- data.frame(G=unique(G))
-  num_categ <- dim(id)[1]
-  n <- dim(X)[1]
-  p <- dim(X)[2]
-
+  # Compute encoding
+  num_categ <- length(unique(G))
   CM <- switch(method,
     one_hot = one_hot_encode(num_categ),
     helmert = helmert_encode(num_categ),
@@ -197,17 +167,28 @@ encoder <- function(method, X, G,
     multi_permutation = permutation_encode(num_categ, num_permutations),
     mnl = mnl_encode(X, G, num_folds)
   )
-  colnames(CM) <- paste(prefix, 1:dim(CM)[2], sep = "")
-  map <- data.frame(cbind(id, CM))
 
+  # Create encoding function
+  encoding_fun <- function(X, G) {
+    validate_X(X)
+    validate_G(G)
 
-  f <- function(X) {
-    X_enc <- map[X[, G], ]
-    rownames(X_enc) <- NULL
-    X <- cbind(X, X_enc)
-    X <- X[, -which(colnames(X) %in% c(G))]
-    return(X)
+    # Augment original matrix
+    X_aug <- cbind(X, CM[G,])
+
+    # Maintain X type
+    if (is.data.frame(X)) {
+      X_aug <- as.data.frame(X_aug)
+    }
+
+    # Maintain row and column names, if appropriate
+    rownames(X_aug) <- rownames(X)
+    if (!is.null(colnames(X))) {
+      colnames(X_aug) <- c(colnames(X), paste(prefix, 1:dim(CM)[2], sep = ""))
+    }
+
+    return(X_aug)
   }
 
-  return(f)
+  return(encoding_fun)
 }

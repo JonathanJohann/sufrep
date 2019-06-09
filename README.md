@@ -20,7 +20,7 @@ X <- matrix(rnorm(n*p),n,p)
 G <- sample(5,size=n,replace=TRUE)
 df <- data.frame(cbind(X,G))
 
-enc <- encoder(X=df,G="G",method = "one_hot")
+enc <- make_encoder(X=df,G="G",method = "one_hot")
 
 train.df <- enc(df)
 print(head(train.df))
