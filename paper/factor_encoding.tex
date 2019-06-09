@@ -259,8 +259,7 @@ Expression \eqref{eq:explicit} formalizes the intution laid out in the previous 
 
 The dependence of the conditional expectation function $\mu$ on the latent variable probabilities $\psi$ via \eqref{eq:explicit} is non-linear; however, we will retain consistency if we use an expressive enough method for learning on $((X_i, \, \psi(G_i)), \, Y_i)$. Methods known to be universally consistent include $k$-nearest neighbors \citep{stone1977consistent}, various tree-based ensembles \citep{biau2008consistency}, and neural networks \citep{farago1993strong}.
 
-The discussion above may seem to imply that we need to estimate $\psi(g)$ directly. However, this quantity depends on the unobservable variable $L_{i}$ and its identification is  impossible without further assumptions and more sophisticated approach. Instead, we pursue a different approach based on the following fact: if $h: \mathbb{R}^{k} \rightarrow \mathbb{R}^{k}$ is a function that possesses a left-inverse $h^{\dagger} \circ h = \text{id}$, then $h \circ \psi$ must also be a sufficient representation, since we can define $f(x, \psi(g)) = \tilde{f}(x, h^{\dagger}(h(\psi(g))))$. Therefore, in this paper, we focus on simple approaches that just rely on finding simple functions sufficients representations of the form $h(\psi(g))$ and can be estimated using observable data $X_{i}$ and $G_{i}$.
-
+The discussion above may seem to imply that we need to estimate $\psi(g)$ directly. However, this quantity depends on the unobservable variable $L_{i}$ and its identification is  impossible without further assumptions and more sophisticated approach.
 
 
 
@@ -316,19 +315,31 @@ is left-invertible. Then, the $p$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \label{alg:means}
 \caption{Means Encoding Method}
 \begin{algorithmic}[1]
-\Procedure{MeansEncoding}{$X,G$}
-\State $\hOmega \gets 0_{n \times p}$
-\State $\bar{X} \gets 0_{|\mathcal{G}| \times p}$
-\For{$g$ in $1$:$|\mathcal{G}|$}
-\Comment{Compute the group averages}
-\State $\bar{X}_{g} \gets \frac{1}{|\{i:G_{i}=g\}|}\sum_{i:G_{i}=g}X_{i}$
-\EndFor
-\For{$i$ in $1$:$n$}
-\Comment{Populate with group averages}
-\State $\hOmega_{i,\cdot} \gets \bar{X}_{G_{i}}$
-\EndFor
-\State \textbf{return} $\hOmega$
-\EndProcedure
+
+  \Procedure{GroupAverages}{$X,G$}
+  \State $\hOmega \gets 0_{M \times p}$
+  \Comment{Compute group-wise averages of continuous covariates}
+  \For{$g$ in $1$:$M$}
+
+  \vspace{0.09cm}
+  \State $\hOmega_{\cdot,g} \gets \frac{1}{|\{i:G_{i}=g\}|}\sum_{i:G_{i}=g}X_{i}$
+  \EndFor
+  \State \textbf{return} $\hOmega$
+  \EndProcedure
+
+  \\
+
+  \Procedure{MeansEncoding}{$X,G$}
+  \State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
+
+  \State $S \gets 0_{n \times p}$
+  \For{$i$ in $1$:$n$}
+  \Comment{Populate with group averages}
+  \State $S_{i,\cdot} \gets \hOmega_{\cdot,G_{i}}$
+  \EndFor
+  \State \textbf{return} $S$
+  \EndProcedure
+
 \end{algorithmic}
 \end{algorithm}
 
@@ -375,10 +386,10 @@ is left-invertible. Then, the $k$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \begin{algorithmic}[1]
 \Procedure{LowRankEncoding}{$X,G,k$}
 
-\State $M \gets$ \textcs{MeansEncoding}$(X, G)$
-\Comment{Compute the group averages}
+\State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
 
-\State $U,D,V^T \gets SVD(M)$
+\State $U,D,V^T \gets SVD(\hOmega)$
+\Comment{Singular value decomposition}
 
 \State $S \gets 0_{n \times k}$
 \For{$i$ in $1$:$n$}
@@ -395,11 +406,14 @@ is left-invertible. Then, the $k$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \caption{Sparse Low Rank Encoding Method}\label{alg:sparselowrankmethod}
 \begin{algorithmic}[1]
 \Procedure{SparseLowRankEncoding}{$X,G,k$}
-\State $M \gets$ \textcs{MeansEncoding}$(X, G)$
-\Comment{Compute the group averages}
 
-\State $A, B \gets SPCA(M)$
+\State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
+
+\State $A, B \gets SPCA(\hOmega)$
+\Comment{Sparse principal component analysis}
+
 \State $Z \gets M \cdot B_{\cdot,1:k}$
+\Comment{Projection on truncated principal components}
 
 \State $S \gets 0_{n \times k}$
 \For{$i$ in $1$:$n$}
@@ -455,10 +469,22 @@ Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that $A$ in \
 \end{lemm}
 
 
+\begin{algorithm}
+\caption{Multinomial logistic regression method (MNL)} \label{alg:mnl}
+\begin{algorithmic}[1]
+\Procedure{MNL}{$X, G$}
 
-
-
-
+\State $\htheta \gets \arg\min_{\theta} \sum_{i} \log \Lambda_{\theta}(G_{i}|X_{i})$
+\Comment{Multinomial logistic regression}
+\State $S \gets 0_{n \times p}$
+\For{$i$ in $1$:$n$}
+  \Comment{Populate with left singular matrix truncated rows}
+  \State $S_{i,\cdot} \gets \htheta_{G_{i}}$
+\EndFor
+\State \textbf{return} $S$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 
 
@@ -629,10 +655,11 @@ For future lines of research, we believe the next important task will be to figu
 
 % ----------- APPENDIX --------------
 \section{Appendix}
+\setlength{\parindent}{0pt}
 
 \subsection{Proofs}
 
-We begin by defining the following matrices that will be used in all proofs below.
+\paragraph{Definitions} The following matrices that will be used below.
 
 \begin{align}
     \Omega &=
@@ -660,9 +687,15 @@ We begin by defining the following matrices that will be used in all proofs belo
     \label{eq:matrix_psi}
 \end{align}
 
+We denote the columns of $\Omega$ as $\omega(g)$ and the columns of $\Psi$ as $\psi(g)$.
+
+\paragraph{Overview} Proof \ref{proof:suff} shows that categories $G_{i}$ only enter the conditional expectation function $\mu(x, g)$ through the latent state probabilities $\psi(g) = \PP{L_{i} \cond G_{i} = g}$. Proofs \ref{proof:means}-\ref{proof:mnl} rely on strategies for writing $\psi(g) = f(h(g))$ then showing that $h(g)$ is also a sufficient representation.
+
+
+
 \subsubsection{Proof of Lemma \ref{lemm:repr}}
 
-\begin{proof}\label{proof:suff}
+\begin{proof} \label{proof:suff}
 To show the equivalence of \eqref{eq:mu} and \eqref{eq:explicit}, we begin by expanding \eqref{eq:mu} as
 \begin{equation}
 \mu(x, \, g)
@@ -670,26 +703,25 @@ To show the equivalence of \eqref{eq:mu} and \eqref{eq:explicit}, we begin by ex
 \label{eq:mu2}
 \end{equation}
 
-\noindent Now, the conditional independence assumptions encoded in our graph imply that the expectation term simplifies to
+Now, the conditional independence assumptions encoded in our graph imply that the expectation term simplifies to
 \begin{equation}
 \EE{Y_i \cond X_i = x, \ G_{i} = g, \ L_i = l} = \EE{Y_i \cond X_i = x, \ L_i = l}
 \end{equation}
 
-\noindent while the second term can be rewritten using Bayes rule as
+while the second term can be rewritten using Bayes rule as
 \begin{equation}
 \PP{L_i = l \cond X_i = x, \, G_i=g}
 &= \frac{ \PP{X_{i}=x \cond L_{i}=l} \PP{L=l \cond G_{i}=g}  }
         {\sum_{l'=1}^{k} \PP{X_{i}=x \cond L_{i}=l'} \PP{L=l' | G_{i}=g} }
 \end{equation}
 
-Combining the above, we see that the mapping $\mu$ only depends on the categorical variable through the function $\psi(g) = \PP{L=l' | G_{i}=g}$. Therefore, $\psi(g)$ is a sufficient representation as defined in \eqref{eq:repr}.
+Combining the above, we see that the mapping $\mu$ only depends on the categorical variable through the multivariable function $\psi(g) = \PP{L_{i}| G_{i}=g}$. Therefore, $\psi(g)$ is a sufficient representation as defined in \eqref{eq:repr}.
 \end{proof}
 
 
 \subsubsection{Proof of Lemma \ref{lemm:means}}
 
-\begin{proof}
-\label{proof:means}
+\begin{proof} \label{proof:means}
 Begin by noting that conditioanl expectations can be computed as a linear combination of the sufficient statistics discussed in Lemma \ref{lemm:repr}.
 \begin{align}
     \EE{ X_{i} \cond G_{i} = g}
@@ -704,16 +736,16 @@ Begin by noting that conditioanl expectations can be computed as a linear combin
     \label{eq:matrix_decomposition}
 \end{align}
 
-\noindent where these matrices are defined as in the top of this section. The sufficient representation for the category $\psi(g) = \Psi_{g}$ lies on the linear span of the set of columns of $A$. Since $A$ has a left-inverse $A^\dagger$ such that $A^\dagger A = I$, we can retrieve the representations by matrix multiplication.
+where these matrices are defined as in the top of this section. The sufficient representation for the category $\psi(g) = \Psi_{g}$ lies on the linear span of the set of columns of $A$. Since $A$ has a left-inverse $A^\dagger$ such that $A^\dagger A = I$, we can retrieve the representations by matrix multiplication.
 \begin{align}
     \psi(g) = (\Psi)_{\cdot, g} = A^\dagger(\Omega)_{\cdot, g} =: A^\dagger \omega(g)
     \label{eq:omega_inverse}
 \end{align}
 
-\noindent Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega(g)$ is also a sufficient representation for the category $g$.
+Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega(g)$ is also a sufficient representation for the category $g$.
 \end{proof}
 
-\subsubsection{Proof of Lemma \ref{lemm:mnl}}
+\subsubsection{Proof of Lemma \ref{lemm:mnl}} \label{proof:mnl}
 \begin{proof}
 We begin by noting that we can use Bayes' theorem to express $\omega(g) = \EE{ X_{i} \cond G=g }$ as a function of $\PP{G=g \cond X_{i} }$, here is assumed to be multinomial logit.
 
@@ -725,12 +757,12 @@ We begin by noting that we can use Bayes' theorem to express $\omega(g) = \EE{ X
   &= \frac{\EE[X]{ X_{i} \Lambda_{\theta}(g|X_{i}} }{ \EE[X]{\Lambda_{\theta}( g | X_{i})}}  \label{eq:mnl_logit}
 \end{align}
 
-\noindent However, note that expression \eqref{eq:mnl_logit} only depends on the category through the mutinomial logit coefficients $\theta_{g}$ that are associate with category $g$. Therefore, under this assumption we can write $\omega(g) = f(\theta_g) =: E[X_{i} | G=g]$. However, recall from \eqref{eq:omega_inverse} that if the matrix $(A)_{j\ell} := E[X_{ij} | L_{i}=\ell]$ has a left-inverse $A^{\dagger}A = I$, we can write
+However, note that expression \eqref{eq:mnl_logit} only depends on the category through the mutinomial logit coefficients $\theta_{g}$ that are associate with category $g$. Therefore, under this assumption we can write $\omega(g) = f(\theta_g) =: E[X_{i} | G=g]$. However, recall from \eqref{eq:omega_inverse} that if the matrix $(A)_{j\ell} := E[X_{ij} | L_{i}=\ell]$ has a left-inverse $A^{\dagger}A = I$, we can write
 \begin{align}
 \psi(g) = A^\dagger \omega(g) = A^\dagger f(\theta_{g})
 \end{align}
 
-\noindent Since $\psi(g)$ only depends on $g$ through $\theta(g)$, it follows that $\theta(g)$ is also a sufficient representation for the category $g$.
+Since $\psi(g)$ only depends on $g$ through $\theta(g)$, it follows that $\theta(g)$ is also a sufficient representation for the category $g$.
 \end{proof}
 
 \subsection{Additional Encoding Methods}{\label{app:encodings}}
