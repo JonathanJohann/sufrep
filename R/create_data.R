@@ -8,7 +8,7 @@ sample_alpha <- function(latent) {
   k <- length(unique(latent))
   sgn <- sample(c(-1, 1), replace = T, size = k)
   base_alpha <- sgn * rexp(sqrt(2), n = k)
-  base_alpha <- base_alpha / sqrt(sum(base_alpha^2))
+  #base_alpha <- base_alpha / sqrt(sum(base_alpha^2))
   alpha <- base_alpha[latent]
   alpha
 }
