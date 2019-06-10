@@ -65,6 +65,8 @@ test_that("create_data: variance of (intercept, x*b, noise) is roughly equal", {
   k <- 3
   ngl <- 2
   data <- create_data(n = n, p = p, k = k, type = "global", pl = 1, ngl = ngl)
-  data$alpha
+  x <- data$x
+  expect_true(abs(var(x %*% t(b)) - 1) < 0.2)
+  expect_true(abs(var(x %*% t(b)) - 1) < 0.2)
 
 })
