@@ -1,157 +1,114 @@
+sample_latent_group <- function(n, k) {
+  latent <- sample.int(k, size = n, replace = T)
+  latent
+}
+
+# alpha[l] ~ Laplace(1)
+sample_alpha <- function(latent) {
+  k <- length(unique(latent))
+  sgn <- sample(c(-1, 1), replace = T, size = k)
+  base_alpha <- sgn * rexp(sqrt(2), n = k)
+  alpha <- base_alpha[latent]
+  alpha
+}
 
 
-# Simulation Steps
-
-# Step 1: Choose k, Nl, Ng, Pl
-
-# Step 2: Sample k mu's where mu in Unif([-1,0,1])^p
-
-# Step 3: Sample Nl points from N(u_{l=i},I_{pxp}) \forall i in {1,...,k}
-
-# Step 4: Sample beta in Unif([-1,0,1])^p, alpha_{l=i} in Unif([-10,...,10]),
-#         ||alpha|| = 1, and ||beta||=1
-
-# Step 5: Permute {1,...,|G|} where |G| = k * Ng and
-#         G_{l=i} = {gj in G | (l-1)*Ng + 1 < j <= l*Ng}
-#         where i in {1,...,k}
-
-# Step 6: Sample G ~ { Unif(Gl),   prob = Pl,
-#                      Unif(G\Gl), prob = 1 - Pl}
-
-# Step 7: Yi = alpha_{l=l'} + X_{l=l'} \beta + eps, eps in N(0,2)
-
-
-k = 10
-Nl = 1000
-Ng = 50
-Pl = 0.9
-p = 20
-sample_mu <- function(k,p,shifts=3){
-  mu = matrix(0,nrow=k,ncol=p)
-  # Adding number of shifts feature
-  #================================
-  for(i in 1:k){
-    shift <- sample(c(-1,1),size=shifts,replace=TRUE)
-    indices <- sample(p,size=shifts,replace=FALSE)
-    mu[i,indices] <- shift
+sample_x_mean <- function(k, p, shifts = 3) {
+  mu <- matrix(0, nrow = k, ncol = p)
+  for (i in 1:k) {
+    shift <- sample(c(-1, 1), size = shifts, replace = TRUE)
+    indices <- sample(p, size = shifts, replace = FALSE)
+    mu[i, indices] <- shift
   }
-  return(mu)
+  mu
 }
 
-sample_points <- function(mu,nl,rho){
-  k <- dim(mu)[1]
-  p <- dim(mu)[2]
-  X <- c()
-  # Adding correlation feature
-  #=============================
-  sigma <- toeplitz(rho^seq(0,(p-1)))
-  for(i in 1:k){
-    Xl <- MASS::mvrnorm(nl,mu=mu[i,],Sigma=sigma)
-    X <- rbind(X,cbind(Xl,rep(i,nl)))
-  }
 
-  # Normalize X
-  #==================
-  for(i in 1:p){
-    X[,i] <- (X[,i]-mean(X[,i]))/sd(X[,i])
-  }
-  colnames(X) <- c(paste("X",1:p,sep=""),"L")
-  return(X)
+sample_x <- function(latent, x_mean, rho=0.5) {
+  p <- dim(x_mean)[2]
+  sigma <- toeplitz(rho^seq(0, (p - 1)))
+  x <- t(apply(x_mean[latent,], 1, function(mul) MASS::mvrnorm(mu = mul, Sigma = sigma)))
+  colnames(x) <- paste("X", 1:p, sep = "")
+  x
 }
 
-sample_beta_global <- function(p){
-  beta = matrix(sample(c(-1,0,1),
-                       size=p,
-                       replace=TRUE),
-                nrow=1,ncol=p)
-  beta = beta/sum(beta^2)
-  return(beta)
+
+sample_beta_latent <- function(k, p) {
+  if (p < 3) stop("Function sample_beta_latent required p > 2.")
+  base_vec <- rep(c(1, 0, -1), p)
+  beta <- replicate(k, sample(base_vec, size = p, replace = F))
+  beta <- t(apply(beta, 2, function(x) x / sqrt(sum(x^2))))
+  beta
 }
 
-sample_beta_latent <- function(k,p){
-  betas = c()
-  for(i in 1:k){
-    beta = matrix(sample(c(-1,0,1),
-                         size=p,
-                         replace=TRUE),
-                  nrow=1,ncol=p)
-    beta = beta/sum(beta^2)
-    betas <- rbind(betas,beta)
-  }
-  return(betas)
+
+sample_beta_global <- function(p) {
+  sample_beta_latent(k = 1, p = p)
 }
 
-sample_alpha <- function(k){
-  alpha = matrix(stats::rnorm(k),
-                 nrow=k,ncol=1)
-  alpha = alpha/sum(alpha^2)
-  return(alpha)
-}
 
-permute_categories <- function(k,ng){
-  map <- matrix(sample(c(1:(k*ng)),
-                       replace=FALSE,
-                       size=k*ng),
-                nrow=k,ncol=ng)
-  return(map)
-}
-
-sample_observed <- function(X,cat,pl){
-  L = dim(X)[2]
-  n = dim(X)[1]
-  t = stats::rbinom(n=n,size=1,prob=pl)
-  G = matrix(0,nrow=n,ncol=1)
-  for(i in 1:n){
-    G[i,] <- ifelse(t[i]==1,
-                     sample(cat[X[i,L],],size=1),
-                     sample(cat[-X[i,L],],size=1))
-  }
-  colnames(G) <- "G"
-  return(G)
-}
-
-create_response <- function(X,alpha,beta,type="global"){
-  n = dim(X)[1]
-  p = dim(X)[2]
-  k = max(dim(alpha))
-  eps = rnorm(n,sd=sqrt(2))
-  if(type=="global"){
-    Y <- X[,-p] %*% t(beta) + alpha[X[,p]] + eps
-  }
-  else if(type=="latent"){
-    Y <- matrix(0,nrow=n,ncol=1)
-    for(i in 1:k){
-      l <- which(X[,"L"]==i)
-      bl <- as.matrix(beta[i,],nrow=p,ncol=1)
-      Y[l,] <- X[l,-p] %*% bl  + alpha[i,] + eps[l]
+sample_observed_category <- function(latent, n, k, nlg, pl) {
+  if (pl <= 0.5) stop("Argument pl must be > 0.5.")
+  num_cats <- k * nlg
+  all_cats <- seq(num_cats)
+  latent_to_obs_cat <- matrix(sample(all_cats, num_cats), k, nlg) # scrambling the map
+  own_latent <- rbinom(prob = pl, n = n, size = 1)
+  obs_cat <- rep(0, n)
+  for (i in 1:n) {
+    own_cats <- latent_to_obs_cat[latent[i],]
+    if (own_latent[i]) {
+      obs_cat[i] <- sample(own_cats, size = 1)
+    } else {
+      obs_cat[i] <- sample(setdiff(all_cats, own_cats), size = 1)
     }
   }
-  colnames(Y) <- "Y"
-  return(Y)
+  obs_cat
+}
+
+linear_global_response <- function(alpha, x, beta) {
+  if (dim(beta)[1] > 1) stop("Argument beta must have only one row.")
+  n <- length(alpha)
+  y <- alpha + x %*% t(beta) + rnorm(n)
+  c(y)
+}
+
+linear_latent_response <- function(latent, alpha, x, betas) {
+  if (dim(betas)[1] == 1) stop("Argument beta must multiple rows.")
+  n <- length(alpha)
+  y <- alpha + apply(x * betas[latent,], 1, sum) + rnorm(n)
+  y
 }
 
 
 
 
 
+n <- 10000    # Number of observations
+k <- 10     # Number of latent groups
+nlg <- 10   # Number of observable cats per latent group
+ncat <- k * nlg # Total number of observable categories
+pl <- 0.9   # Probability that observable category belongs to latent group
+p <- 10     # Number of covariates
+
+# Draw the latent group L[i] and observable category G[i]
+latent <- sample_latent_group(n, k)
+obs_cat <- sample_observed_category(latent, n, k, nlg, pl)
+
+# Draw intercept shift alpha[i]
+alpha <- sample_alpha(latent)
+
+# Draw continuous covariatex X[i]
+x_mean <- sample_x_mean(k, p)
+x <- sample_x(latent, x_mean)
+
+# Draw beta coefficients
+global_beta <- sample_beta_global(p)
+latent_beta <- sample_beta_latent(k, p)
+
+# Compute response
+y_global <- linear_global_response(alpha, x, global_beta)
+y_latent <- linear_latent_response(latent, alpha, x, latent_beta)
 
 
-simulation <- function(p,k,nl,ng,pl,rho=0.25,type="global",seed=NULL){
-  if(is.null(seed)){seed = time_seed()}
-  set.seed(seed)
-  u = sample_mu(k,p)
-  X = sample_points(u,nl,rho)
-  a = sample_alpha(k)
-  if(type=="global"){
-    b = sample_beta_global(p)
-  } else if(type=="latent"){
-    b = sample_beta_latent(k,p)
-  }
-  g = permute_categories(k,ng)
-  G = sample_observed(X=X,cat=g,pl=pl)
-  Y = create_response(X=X,alpha=a,beta=b,type=type)
-  output = as.data.frame(cbind(X[,-(p+1)],G,Y))
-  return(output)
-}
 
 
