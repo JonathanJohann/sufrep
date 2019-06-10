@@ -156,7 +156,7 @@ make_encoder <- function(method, X, G,
   validate_options(method, Y, num_components, num_permutations, num_folds)
 
   # Compute encoding
-  num_categ <- length(unique(G))
+  num_categ <- length(levels(G))
   CM <- switch(method,
     one_hot = one_hot_encode(num_categ),
     helmert = helmert_encode(num_categ),

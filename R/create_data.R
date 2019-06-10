@@ -3,11 +3,12 @@ sample_latent_group <- function(n, k) {
   latent
 }
 
-# alpha[l] ~ Laplace(1)
+# alpha[l] ~ Laplace
 sample_alpha <- function(latent) {
   k <- length(unique(latent))
   sgn <- sample(c(-1, 1), replace = T, size = k)
   base_alpha <- sgn * rexp(sqrt(2), n = k)
+  base_alpha <- base_alpha / sqrt(sum(base_alpha^2))
   alpha <- base_alpha[latent]
   alpha
 }
@@ -47,15 +48,22 @@ sample_beta_global <- function(p) {
 }
 
 
-sample_observed_category <- function(latent, n, k, ngl, pl) {
-  if (pl <= 0.5) stop("Argument pl must be > 0.5.")
+get_latent_to_observed_map <- function(k, ngl) {
   num_cats <- k * ngl
   all_cats <- seq(num_cats)
   latent_to_obs_cat <- matrix(sample(all_cats, num_cats), k, ngl) # scrambling the map
+  latent_to_obs_cat
+}
+
+
+sample_observed_category <- function(latent, map, pl) {
+  if (pl <= 0.5) stop("Argument pl must be > 0.5.")
+  n <- length(latent)
+  all_cats <- c(map)
   own_latent <- rbinom(prob = pl, n = n, size = 1)
   obs_cat <- rep(0, n)
   for (i in 1:n) {
-    own_cats <- latent_to_obs_cat[latent[i], ]
+    own_cats <- map[latent[i], ]
     if (own_latent[i]) {
       obs_cat[i] <- sample(own_cats, size = 1)
     } else {
@@ -86,11 +94,14 @@ linear_latent_response <- function(latent, alpha, x, betas) {
 # k: number of latent groups
 # ngl: number of observable cats per latent group
 # pl: probability that observable category belongs to their 'own' latent group
+#' @export
 create_data <- function(n, p, k, ngl, pl, type = "global") {
+  if (p < k) stop("Our methods don't work if p < k.")
 
   # Draw the latent group L[i] and observable category G[i]
   latent <- sample_latent_group(n, k)
-  obs_cat <- sample_observed_category(latent, n, k, ngl, pl)
+  map <- get_latent_to_observed_map(k, ngl)
+  obs_cat <- sample_observed_category(latent, map, pl)
 
   # Draw intercept shift alpha[i]
   alpha <- sample_alpha(latent)
@@ -111,11 +122,8 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
   g <- factor(obs_cat)
 
   # Put it all together
-  data <- list(x = x, y = y, l = latent, alpha = alpha, g = g)
+  data <- list(x = x, y = y, l = latent, map = map,
+               alpha = alpha, g = g, x_mean = x_mean,
+               beta = beta)
   data
 }
-
-
-
-
-
