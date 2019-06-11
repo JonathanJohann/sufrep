@@ -513,7 +513,7 @@ Covariates associated with latent group $L_{i} = \ell$ are normally distributed 
   (\Sigma)_{kj} = \left(\frac{1}{2}\right)^{|k - j|}
 \end{align}
 
-\paragraph{Outcomes} In the \emph{latent linear setup}, the outcome model is linear in regressors conditional on coefficients that are specific to each latent group.
+\paragraph{Outcomes} In the \emph{latent linear} setup, the outcome model is linear in regressors conditional on coefficients that are specific to each latent group.
 \begin{align}
   Y_{i} &= \alpha_{\ell} + X_{i}^{T}\beta_{\ell} + \epsilon_{i} \label{eq:linear_outcome}
 \end{align}
@@ -524,7 +524,14 @@ where the intercept and slopes are created as follows. The slope normalization e
 \epsilon_{i} &\sim \mathcal{N}(0, 1)
 \end{align}
 
-\noindent In the \emph{global linear} setup, only the intercept changes and the slopes are kept fixed across latent groups, so $\beta_{\ell} = \beta_{\ell'}$ for all $\ell, \ell'$.
+In the \emph{global linear} setup, only the intercept changes and the slopes are kept fixed across latent groups, so $\beta_{\ell} = \beta_{\ell'}$ for all $\ell, \ell'$.
+
+In the  \emph{hermite} setup, outcome is linear in a sparse hermite polynomial basis $\phi(X_{i})$ where only $p$ randomly selected coefficients are active.
+\begin{align}
+  Y_{i} &= \phi(X_{i})^{T}\beta_{\ell} + \epsilon_{i} \label{eq:hermite_outcome}
+\end{align}
+As in the \emph{latent linear} setup, the slopes are specific for each latent group.
+
 
 
 \subsection{Simulation Results}
