@@ -520,15 +520,17 @@ Covariates associated with latent group $L_{i} = \ell$ are normally distributed 
 where the intercept and slopes are created as follows. The slope normalization ensures that the signal from the intercept, regressors and noise is roughly comparable.
 \begin{align}
 \alpha_{\ell} &\sim Laplace(1) \quad \text{for each }\ell \in \mathcal{L} \label{eq:intercept} \\
-\tilde{\beta}_{\ell j} &\sim \text{Uniform}({0, 1, -1}) \qquad \beta_{\ell} = \frac{\tilde{\beta}_{\ell}}{\Norm{\tilde{\beta}_{\ell}}_{2}} \label{eq:slopes} \\
+\tilde{\beta}_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta_{\ell} = \frac{\tilde{\beta}_{\ell}}{\Norm{\tilde{\beta}_{\ell}}_{2}} \label{eq:slopes} \\
 \epsilon_{i} &\sim \mathcal{N}(0, 1)
 \end{align}
 
 In the \emph{global linear} setup, only the intercept changes and the slopes are kept fixed across latent groups, so $\beta_{\ell} = \beta_{\ell'}$ for all $\ell, \ell'$.
 
-In the  \emph{hermite} setup, outcome is linear in a sparse hermite polynomial basis $\phi(X_{i})$ where only $p$ randomly selected coefficients are active.
+In the  \emph{hermite} setup, we compute a third-order Hermite polynomial basis $\phi(X_{i})$, then select a subset $\mathcal{J}'$ of ``active'' regressors, with $|\mathcal{J}'| = p$. The outcome is linear in this sparse basis.
 \begin{align}
-  Y_{i} &= \phi(X_{i})^{T}\beta_{\ell} + \epsilon_{i} \label{eq:hermite_outcome}
+  Y_{i} &= \sum_{j \in \mathcal{J'}} \phi_{j}(X_{i})^{T}\beta_{\ell j} + \epsilon_{i}
+  \quad \text{where} \quad
+  \beta_{\ell j} \sim Uniform\left(\left\{-\frac{1}{\sqrt{p}}, +\frac{1}{\sqrt{p}}\right\}\right) \label{eq:hermite_outcome}
 \end{align}
 As in the \emph{latent linear} setup, the slopes are specific for each latent group.
 

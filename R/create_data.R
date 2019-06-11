@@ -46,6 +46,10 @@ sample_beta_global <- function(p) {
   sample_beta_latent(k = 1, p = p)
 }
 
+sample_beta_hermite <- function(k, p) {
+  matrix(sample(c(1, -1)/sqrt(p), replace = T, size = k*p), k, p)
+}
+
 
 get_latent_to_observed_map <- function(k, ngl) {
   num_cats <- k * ngl
@@ -138,15 +142,15 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
     alpha <- sample_alpha(latent)
     beta <- sample_beta_global(p)
     y <- linear_global_response(alpha, x, beta)
-  } else if (type == "latent") {git st
+  } else if (type == "latent") {
     alpha <- sample_alpha(latent)
     beta <- sample_beta_latent(k, p)
     y <- linear_latent_response(latent, alpha, x, beta)
   } else if (type == "hermite") {
-    alpha <- NULL
+    alpha <- rep(0, length(latent))
     xt <- generate_basis(x, order = 3)
     active <- sample.int(dim(xt)[2], replace = F, size = p)
-    beta <- sample_beta_latent(k, p)
+    beta <- sample_beta_hermite(k, p)
     xt_active <- xt[,active]
     y <- linear_latent_response(latent, alpha, xt_active, beta)
   } else {
