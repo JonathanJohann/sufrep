@@ -9,7 +9,7 @@ method <- sample(encoding_methods, 1)
 n <- 1000
 p <- 10
 k <- 5 #sample(c(2, 5))
-ngl <- 25 #sample(c(5, 10, 25, 50, 100), 1)
+ngl <- 5 #sample(c(5, 10, 25, 50, 100), 1)
 pl <- .9
 type <- "global"
 filename <- paste0(method, "_", time_seed(), ".csv", collapse = "")
@@ -33,5 +33,6 @@ for (i in seq(100)) {
 
   config <- cbind(n, p, k, ngl, pl, method, other = NA, mse_enc, mse_onehot)
   write.table(config, file = filename, append = T, col.names = F, sep = ",")
+  print(config)
 
 }
