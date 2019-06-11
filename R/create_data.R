@@ -138,7 +138,7 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
     alpha <- sample_alpha(latent)
     beta <- sample_beta_global(p)
     y <- linear_global_response(alpha, x, beta)
-  } else if (type == "latent") {
+  } else if (type == "latent") {git st
     alpha <- sample_alpha(latent)
     beta <- sample_beta_latent(k, p)
     y <- linear_latent_response(latent, alpha, x, beta)
