@@ -28,7 +28,7 @@ data <- list(x= df[,-c(1,15)],
 
 set.seed(123123)
 start <- Sys.time()
-methods <-c("means")#multi_permutation","means","low_rank","sparse_low_rank","mnl")
+methods <-c("mnl")#multi_permutation","means","low_rank","sparse_low_rank","mnl")
 results <- c()
 for (iz in 1:length(methods)) {
   print(i)
@@ -38,11 +38,13 @@ for (iz in 1:length(methods)) {
     #data <- create_data(n, p, k, ngl = ngl, pl = pl, type = type)
     mses <- c()
     for(i in 1:4){
-      train <- list(x = data$x[folds1[[i]],],
+      train <- list(x = apply(data$x[folds1[[i]],],
+                              2,as.numeric),
                     g = data$g[folds1[[i]]],
                     y = data$y[folds1[[i]]])
       
-      test <- list(x = data$x[-folds1[[i]],],
+      test <- list(x = apply(data$x[-folds1[[i]],],
+                             2,as.numeric),
                    g = data$g[-folds1[[i]]],
                    y = data$y[-folds1[[i]]])
       
@@ -83,7 +85,8 @@ for (iz in 1:length(methods)) {
         x_enc <- enc_method(train$x, train$g)
         x_test_enc <- enc_method(test$x, test$g)
       } else if(method %in% c("mnl")){
-        enc_method <- make_encoder(method, X = train$x, G = train$g,num_folds = 2)
+        enc_method <- tryCatch({make_encoder(method, X = train$x, G = train$g)},
+                               error=function(e){make_encoder(method, X = train$x, G = train$g)})
         x_enc <- enc_method(train$x, train$g)
         x_test_enc <- enc_method(test$x, test$g)
       }

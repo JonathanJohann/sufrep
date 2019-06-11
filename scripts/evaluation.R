@@ -4,7 +4,7 @@ library(caret)
 time_seed <- function() {
   as.integer((as.numeric(Sys.time()) * 1e+07) %% 1e+07)
 }
-encoding_methods <- c("multi_permutation")
+encoding_methods <- c("mnl")
 method <- sample(encoding_methods, 1)
 n <- 10000
 p <- 20
@@ -67,6 +67,10 @@ for (i in seq(10)) {
       enc_method <- make_encoder(method, X = train$x, G = train$g,num_components = which.min(cv_mses))
       x_enc <- enc_method(train$x, train$g)
       x_test_enc <- enc_method(test$x, test$g)
+    } else if(method %in% c("mnl")){
+      enc_method <- make_encoder(method, X = train$x, G = train$g)
+      x_enc <- enc_method(train$x, train$g)
+      x_test_enc <- enc_method(test$x, test$g)
     }
     else{
       enc_method <- make_encoder(method, X = train$x, G = train$g)
@@ -83,7 +87,7 @@ for (i in seq(10)) {
     mse_enc <- mean((predict(forest_enc,x_test_enc)$predictions - test$y)^2, na.rm = TRUE)
     mse_onehot <- mean((predict(forest_onehot,x_test_onehot)$predictions - test$y)^2, na.rm = TRUE)
     
-    config <- cbind(n, p, k, ngl, pl, method, other = NA, mse_enc, mse_onehot)
+    config <- cbind(n, p, k, ngl, pl, method, type, other = NA, mse_enc, mse_onehot)
     write.table(config, file = filename, append = T, col.names = F, sep = ",")
   })
   end <- Sys.time()
