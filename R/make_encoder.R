@@ -192,13 +192,13 @@ make_encoder <- function(method, X, G,
 
 
 
-
+#' @export
 get_xgboost_mse <- function(train,test,...){
   train_Y <- train %>% dplyr::pull(Y)
   train_X <- as.matrix(train %>% dplyr::select(-Y))
   test_Y <- test %>% dplyr::pull(Y)
   test_X <- as.matrix(test %>% dplyr::select(-Y))
-  
+
   xgb_grid_1 = expand.grid(nrounds = c(20,50,100),
                            max_depth = c(3,6,9,12),
                            colsample_bytree = c(0.5,0.7,0.9),
@@ -207,21 +207,21 @@ get_xgboost_mse <- function(train,test,...){
                            min_child_weight = c(1,5,10),
                            subsample = c(0.5,0.75,1.0)
   )
-  
+
   xgb_trcontrol_1 = trainControl(
     method = "cv",
     number = 3,
     allowParallel = TRUE
   )
-  
+
   xgb_train_1 = train(x=train_X,
                       y=train_Y,
                       trControl = xgb_trcontrol_1,
                       tuneGrid = xgb_grid_1,
                       method = "xgbTree"
   )
-  
-  
+
+
   predictions <- predict(xgb_train_1,test_X)
   mse <- mean((test_Y-predictions)^2)
   return(mse)

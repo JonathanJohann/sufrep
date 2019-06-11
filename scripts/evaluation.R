@@ -1,9 +1,15 @@
 library(sufrep)
 library(grf)
 library(caret)
+library(glmnet)
+library(xgboost)
+
 time_seed <- function() {
   as.integer((as.numeric(Sys.time()) * 1e+07) %% 1e+07)
 }
+
+model = "regression_forest"
+
 encoding_methods <- c("mnl")
 method <- sample(encoding_methods, 1)
 n <- 10000
@@ -22,15 +28,15 @@ for (i in seq(10)) {
   try({
     data <- create_data(n, p, k, ngl = ngl, pl = pl, type = type)
     train_test <- createDataPartition(factor(data$g),p=0.8)
-    
+
     train <- list(x = data$x[train_test$Resample1,],
                   g = data$g[train_test$Resample1],
                   y = data$y[train_test$Resample1])
-    
+
     test <- list(x = data$x[-train_test$Resample1,],
                  g = data$g[-train_test$Resample1],
                  y = data$y[-train_test$Resample1])
-    
+
     if(method %in% c("fisher")){
       enc_method <- make_encoder(method, X = train$x, G = train$g,Y=train$y)
       x_enc <- enc_method(train$x, train$g)
@@ -50,12 +56,12 @@ for (i in seq(10)) {
         for(iii in 1:3){
           #make encoder function based on training subset
           enc_method_CV <- make_encoder(method, X = train$x[folds[[iii]],], G = train$g[folds[[iii]]],num_components = cmp)
-          
+
           #CV train & test
           x_enc_CV <- enc_method_CV(train$x[folds[[iii]],], train$g[folds[[iii]]])
-          
+
           x_test_enc_CV <- enc_method_CV(train$x[-folds[[iii]],], train$g[-folds[[iii]]])
-          
+
           forest_enc_CV <- regression_forest(x_enc_CV, train$y[folds[[iii]]])
           mse_enc_CV <- mean((predict(forest_enc_CV,x_test_enc_CV)$predictions - train$y[-folds[[iii]]])^2, na.rm = TRUE)
           fold_mses <- c(fold_mses,mse_enc_CV)
@@ -80,14 +86,23 @@ for (i in seq(10)) {
     enc_onehot <- make_encoder("one_hot", X = train$x, G = train$g)
     x_onehot <- enc_onehot(train$x, train$g)
     x_test_onehot <- enc_onehot(test$x,test$g)
-    
-    forest_enc <- regression_forest(x_enc, train$y)
-    forest_onehot <- regression_forest(x_onehot, train$y)
-    
-    mse_enc <- mean((predict(forest_enc,x_test_enc)$predictions - test$y)^2, na.rm = TRUE)
-    mse_onehot <- mean((predict(forest_onehot,x_test_onehot)$predictions - test$y)^2, na.rm = TRUE)
-    
-    config <- cbind(n, p, k, ngl, pl, method, type, other = NA, mse_enc, mse_onehot)
+
+
+    if(model=="regression_forest"){
+      forest_enc <- regression_forest(x_enc, train$y)
+      forest_onehot <- regression_forest(x_onehot, train$y)
+
+      mse_enc <- mean((predict(forest_enc,x_test_enc)$predictions - test$y)^2, na.rm = TRUE)
+      mse_onehot <- mean((predict(forest_onehot,x_test_onehot)$predictions - test$y)^2, na.rm = TRUE)
+    }
+    else{
+      mse_enc <- get_xgboost_mse(train=cbind(x_enc,data.frame(Y=train$y)),
+                                 test=cbind(x_test_enc,data.frame(Y=test$y)))
+      mse_onehot <- get_xgboost_mse(train=cbind(x_onehot,data.frame(Y=train$y)),
+                                    test=cbind(x_test_onehot,data.frame(Y=test$y)))
+    }
+
+    config <- cbind(n, p, k, ngl, pl, method, model,type, other = NA, mse_enc, mse_onehot)
     write.table(config, file = filename, append = T, col.names = F, sep = ",")
   })
   end <- Sys.time()
