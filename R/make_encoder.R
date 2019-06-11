@@ -95,20 +95,12 @@ permutation_encode <- function(num_categ, num_perms) {
 
 mnl_encode <- function(X, G, num_folds) {
 
-  # Fit glmnet using stratified K-fold cv
-  df <- data.frame(X=X, G=G)
-  cv_index <- caret::createFolds(factor(df$G), num_folds)
-  tc <- caret::trainControl(index = cv_index, method = 'cv', number = num_folds)
-  glmnet_fit <- caret::train(G ~ ., data = df, method = "glmnet",
-                             trControl = tc, family= "multinomial")
-  model <- glmnet_fit$finalModel
-  sparse_coef <- coef(model, s=model$lambdaOpt)
-
-  # Retrieve coefficients
-  dense_coef <- lapply(sparse_coef, as.matrix)
-  thetahat <- as.matrix(t(as.data.frame(dense_coef)))
-  rownames(thetahat) <- NULL
-  colnames(thetahat) <- NULL
+  fit <- glmnet::glmnet(x=X,y=G,family="multinomial")
+  coefs <- coef(fit,s=min(fit$lambda,na.rm=TRUE))
+  coef_mat <- as.data.frame(lapply(coefs,as.matrix))
+  CM <- t(as.matrix(coef_mat))
+  rownames(CM) <- NULL
+  colnames(CM) <- NULL
   return(CM)
 }
 
@@ -130,10 +122,10 @@ validate_options <- function(method, Y, num_components, num_permutations, num_fo
   if ((method != "fisher") && (!is.null(Y))) {
     stop("Only method 'fisher' requires Y.")
   }
-  if (!(method %in% c("low_rank", "sparse_low_rank")) && (!is.null(Y))) {
+  if (!(method %in% c("low_rank", "sparse_low_rank")) && (!is.null(num_components))) {
     stop("Only methods 'low_rank' and 'sparse_low_rank' requires num_components.")
   }
-  if ((method != "multi_permutation") && (!is.null(Y))) {
+  if ((method != "multi_permutation") && (!is.null(num_permutations))) {
     stop("Only method 'multi_permutation' requires num_permutations.")
   }
   # etc.
@@ -146,7 +138,7 @@ make_encoder <- function(method, X, G,
                          Y = NULL,
                          num_components = NULL,
                          num_permutations = NULL,
-                         num_folds = 3) {
+                         num_folds = NULL) {
 
   # Type validation
   validate_X(X)
@@ -177,7 +169,7 @@ make_encoder <- function(method, X, G,
   encoding_fun <- function(X, G) {
     validate_X(X)
     validate_G(G)
-
+    print(dim(CM))
     # Augment original matrix
     X_aug <- cbind(X, CM[as.integer(G),])
 
@@ -196,4 +188,41 @@ make_encoder <- function(method, X, G,
   }
 
   return(encoding_fun)
+}
+
+
+
+
+get_xgboost_mse <- function(train,test,...){
+  train_Y <- train %>% dplyr::pull(Y)
+  train_X <- as.matrix(train %>% dplyr::select(-Y))
+  test_Y <- test %>% dplyr::pull(Y)
+  test_X <- as.matrix(test %>% dplyr::select(-Y))
+  
+  xgb_grid_1 = expand.grid(nrounds = c(20,50,100),
+                           max_depth = c(3,6,9,12),
+                           colsample_bytree = c(0.5,0.7,0.9),
+                           eta = c(0.1,0.3,0.5),
+                           gamma=c(0,0.1),
+                           min_child_weight = c(1,5,10),
+                           subsample = c(0.5,0.75,1.0)
+  )
+  
+  xgb_trcontrol_1 = trainControl(
+    method = "cv",
+    number = 3,
+    allowParallel = TRUE
+  )
+  
+  xgb_train_1 = train(x=train_X,
+                      y=train_Y,
+                      trControl = xgb_trcontrol_1,
+                      tuneGrid = xgb_grid_1,
+                      method = "xgbTree"
+  )
+  
+  
+  predictions <- predict(xgb_train_1,test_X)
+  mse <- mean((test_Y-predictions)^2)
+  return(mse)
 }
