@@ -9,9 +9,9 @@ method <- sample(encoding_methods, 1)
 n <- 1000
 p <- 10
 k <- 5 #sample(c(2, 5))
-ngl <- 5 #sample(c(5, 10, 25, 50, 100), 1)
+ngl <- 100 #sample(c(5, 10, 25, 50, 100), 1)
 pl <- .9
-type <- "global"
+type <- "hermite"
 filename <- paste0(method, "_", time_seed(), ".csv", collapse = "")
 
 for (i in seq(100)) {

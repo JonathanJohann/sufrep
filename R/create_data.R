@@ -88,6 +88,33 @@ linear_latent_response <- function(latent, alpha, x, betas) {
   y
 }
 
+
+generate_basis = function(X, order=3) {
+  H = lapply(1:ncol(X), function(j) {
+    sapply(1:order, function(k) EQL::hermite(X[,j], k, prob = TRUE) / sqrt(factorial(k)))
+  })
+  polys = lapply(1:order, function(r) {
+    partitions = combn(r + ncol(X) - 1, ncol(X) - 1,
+                       function(vec) c(vec, r + ncol(X)) - c(0, vec) - 1)
+    elems = sapply(1:ncol(partitions), function(iter) {
+      part = partitions[,iter]
+      idx = which(part > 0)
+      elem = H[[idx[1]]][,part[idx[1]]]
+      if (length(idx) > 1) {
+        for (id in idx[-1]) {
+          elem = elem * H[[id]][,part[id]]
+        }
+      }
+      elem
+    })
+    scale(elems) / sqrt(ncol(elems)) / r
+  })
+  Reduce(cbind, polys)
+}
+
+
+
+
 # n: number of observations
 # p: number of continuous covariates
 # k: number of latent groups
@@ -102,20 +129,28 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
   map <- get_latent_to_observed_map(k, ngl)
   obs_cat <- sample_observed_category(latent, map, pl)
 
-  # Draw intercept shift alpha[i]
-  alpha <- sample_alpha(latent)
-
   # Draw continuous covariatex X[i]
   x_mean <- sample_x_mean(k, p)
   x <- sample_x(latent, x_mean)
 
   # Compute response
   if (type == "global") {
+    alpha <- sample_alpha(latent)
     beta <- sample_beta_global(p)
     y <- linear_global_response(alpha, x, beta)
   } else if (type == "latent") {
+    alpha <- sample_alpha(latent)
     beta <- sample_beta_latent(k, p)
     y <- linear_latent_response(latent, alpha, x, beta)
+  } else if (type == "hermite") {
+    alpha <- NULL
+    xt <- generate_basis(x, order = 3)
+    active <- sample.int(dim(xt)[2], replace = F, size = p)
+    beta <- sample_beta_latent(k, p)
+    xt_active <- xt[,active]
+    y <- linear_latent_response(latent, alpha, xt_active, beta)
+  } else {
+    stop("Bad method name.")
   }
 
   g <- factor(obs_cat)
