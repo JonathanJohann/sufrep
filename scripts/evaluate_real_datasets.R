@@ -5,15 +5,15 @@ library(glmnet)
 library(xgboost)
 
 type <- "ames"
-filename <- paste0(method, "_", time_seed(), ".csv", collapse = "")
-
+filename <- paste0(type, "_", time_seed(), ".csv", collapse = "")
+model = "xgboost"
 num_comp <- c(5,10,15)
 
 #==========================
-df <- sufrep::ames
-data <- list(x = df[,-c(13,78)],
-             y = df$SalePrice,
-             g = factor(df$Neighborhood))
+#df <- sufrep::ames
+#data <- list(x = df[,-c(13,78)],
+#             y = df$SalePrice,
+#             g = factor(df$Neighborhood))
 
 #==========================
 df <- sufrep::pakistan
@@ -23,23 +23,28 @@ data <- list(x = df[,-c(1,12)],
 
 
 #==========================
-df <- sufrep::kingcounty
-data <- list(x= df[,-c(1,15)],
-             y=df[,1],
-             g=factor(df[,15]))
-
+#df <- sufrep::kingcounty
+#data <- list(x= df[,-c(1,15)],
+#             y=df[,1],
+#             g=factor(df[,15]))
+p = ncol(data$x)
 set.seed(123123)
 start <- Sys.time()
 methods <-c("means","low_rank","sparse_low_rank","mnl",
-            "multi_permutation","permutation","simple_effect")
+            "multi_permutation","permutation","simple_effect",
+            "helmert","deviation","repeated_effect","fisher",
+            "difference")
 results <- c()
+pvals <- c()
 for (iz in 1:length(methods)) {
-  print(i)
+  print(iz)
   method <- methods[iz]
   try({
     folds1 <- createFolds(factor(data$g),k = 4,returnTrain = T)
     #data <- create_data(n, p, k, ngl = ngl, pl = pl, type = type)
     mses <- c()
+    mse_encs <- c()
+    mse_onehots <-c()
     for(i in 1:4){
       train <- list(x = apply(data$x[folds1[[i]],],
                               2,as.numeric),
@@ -115,14 +120,21 @@ for (iz in 1:length(methods)) {
         mse_onehot <- get_xgboost_mse(train=cbind(x_onehot,data.frame(Y=train$y)),
                                       test=cbind(x_test_onehot,data.frame(Y=test$y)))
       }
-      config <- cbind(method, type, model,other = NA, mse_enc, mse_onehot)
-      write.table(config, file = filename, append = T, col.names = F, sep = ",")
-      mses <- c(mses, mse_enc/mse_onehot)
-    }
 
-    results <- rbind(results,mean(mses))
+      config <- cbind(method, type, model,other = NA, mse_enc, mse_onehot)
+      #write.table(config, file = filename, append = T, col.names = F, sep = ",")
+      mses <- c(mses, mse_enc/mse_onehot)
+      mse_encs <- c(mse_encs,mse_enc)
+      mse_onehots <- c(mse_onehots,mse_onehot)
+    }
+    pvals <- c(pvals,lapply(t.test(mse_encs,mse_onehots,paired=TRUE,alternative="two.sided"),as.matrix)$p.value)
+    results <- c(results,mean(mses))
   })
   end <- Sys.time()
   print(end-start)
 }
-print(results)
+output <- data.frame(methods=methods,
+                     pval=pvals,
+                     percent=results)
+output["model"] <- model
+print(output)
