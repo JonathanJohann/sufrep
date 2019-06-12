@@ -547,7 +547,7 @@ For the methods that do take advantage of the low rank structure, we notice that
 
 While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for Regression Forests due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. %Furthermore, we find that MNL tends to do worse which appears to be due to the fact that the underlying method requires model estimation and is therefore more data-intensive than other methods. %For the XGBoost based evaluation, due to the model's ability to express more complex functions than normal tree-based methods, we find that there is little or negative benefit when adding our encoding methods when the number of latent groups is rather small. However, this changes when there are a larger number of latent groups, but not by a substantial amount.
 
-\begin{figure*}[htp]
+\begin{figure*}[H]
   \centering
   \includegraphics[scale=0.6]{figures/rf_global_results.png}
   \caption {The percent improvement for each setup and varied latent groups and observable categories with fixed rho, signal to noise ratio, and own-group probability.}
@@ -600,7 +600,7 @@ On average, it looks like low rank approaches to generating encodings were most 
 %The only setting which is more consistently negative is the King County dataset. For the XGBoost simulations, we see that there is a bigger performance improvement for Ames which is a relatively higher dimensional problem compared to the "King County" and "Pakistan" datasets. For the Regression Forest based evaluation, we see that primarily the methods which provide the most dimensionality reduction are the best performers. This could be likely due to the fact that one hot encoding provides a 25-dimensional increase in the modeling problem while methods like Means and MNL add $p$ additional dimensions where $p$ is decently larger than the number of unique categories.In both setups, the rotation of the covariate space in King County appears to be unfavorable given that the low rank and sparse low rank methods are the worst performers.
 
 
-\begin{table}[htp]
+\begin{table}[H]
 	\centering
 	\begin{tabular}{|c|c|c|c|c|c|}
 		\hline

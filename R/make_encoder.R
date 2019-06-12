@@ -211,14 +211,17 @@ get_xgboost_mse <- function(train,test,...){
   xgb_trcontrol_1 = trainControl(
     method = "cv",
     number = 3,
-    allowParallel = TRUE
+    allowParallel = TRUE,
+    search="random",
+
   )
 
   xgb_train_1 = train(x=train_X,
                       y=train_Y,
                       trControl = xgb_trcontrol_1,
                       tuneGrid = xgb_grid_1,
-                      method = "xgbTree"
+                      method = "xgbTree",
+                      tuneLength = 30
   )
 
 
