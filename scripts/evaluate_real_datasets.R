@@ -43,10 +43,10 @@ filename <- paste0(type, "_",model, ".csv", collapse = "")
 p = ncol(data$x)
 set.seed(123123)
 start <- Sys.time()
-methods <-c("means","low_rank","sparse_low_rank","mnl",
-            "multi_permutation","permutation","simple_effect",
-            "helmert","deviation","repeated_effect","fisher",
-            "difference")
+methods <-c("means","low_rank","sparse_low_rank","mnl")#,
+          #  "multi_permutation","permutation","simple_effect",
+          #  "helmert","deviation","repeated_effect","fisher",
+          #  "difference")
 methods <- c(sample(methods,1))
 results <- c()
 pvals <- c()
