@@ -194,10 +194,10 @@ make_encoder <- function(method, X, G,
 
 #' @export
 get_xgboost_mse <- function(train,test,...){
-  train_Y <- train %>% dplyr::pull(Y)
-  train_X <- as.matrix(train %>% dplyr::select(-Y))
-  test_Y <- test %>% dplyr::pull(Y)
-  test_X <- as.matrix(test %>% dplyr::select(-Y))
+  train_Y <- as.tibble(train) %>% dplyr::pull(Y)
+  train_X <- as.tibble(train) %>% dplyr::select(-Y)
+  test_Y <- as.tibble(test) %>% dplyr::pull(Y)
+  test_X <- as.tibble(test) %>% dplyr::select(-Y)
 
   xgb_grid_1 = expand.grid(nrounds = c(20,50,100),
                            max_depth = c(3,6,9,12),
@@ -212,8 +212,7 @@ get_xgboost_mse <- function(train,test,...){
     method = "cv",
     number = 3,
     allowParallel = TRUE,
-    search="random",
-
+    search="random"
   )
 
   xgb_train_1 = train(x=train_X,

@@ -3,6 +3,7 @@ library(grf)
 library(caret)
 library(glmnet)
 library(xgboost)
+library(tidyverse)
 
 type <- "ames"
 filename <- paste0(type, "_", time_seed(), ".csv", collapse = "")
@@ -10,16 +11,16 @@ model = "xgboost"
 num_comp <- c(5,10,15)
 
 #==========================
-#df <- sufrep::ames
-#data <- list(x = df[,-c(13,78)],
-#             y = df$SalePrice,
-#             g = factor(df$Neighborhood))
+df <- sufrep::ames
+data <- list(x = df[,-c(13,78)],
+             y = df$SalePrice,
+             g = factor(df$Neighborhood))
 
 #==========================
-df <- sufrep::pakistan
-data <- list(x = df[,-c(1,12)],
-             y=df[,1],
-             g=factor(df[,12]))
+#df <- sufrep::pakistan
+#data <- list(x = df[,-c(1,12)],
+#             y=df[,1],
+#             g=factor(df[,12]))
 
 
 #==========================
