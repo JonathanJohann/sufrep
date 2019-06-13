@@ -157,3 +157,4 @@ output <- data.frame(methods=methods,
                      percent=results)
 output["model"] <- model
 print(output)
+write.csv(output,file=filename)
