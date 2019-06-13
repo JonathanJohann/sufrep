@@ -80,9 +80,14 @@ for (iz in 1:length(methods)) {
             x_enc_CV <- enc_method_CV(train$x[folds[[iii]],], train$g[folds[[iii]]])
 
             x_test_enc_CV <- enc_method_CV(train$x[-folds[[iii]],], train$g[-folds[[iii]]])
+            if(model=="regression_forest"){
+              forest_enc_CV <- regression_forest(x_enc_CV, train$y[folds[[iii]]])
+              mse_enc_CV <- mean((predict(forest_enc_CV,x_test_enc_CV)$predictions - train$y[-folds[[iii]]])^2, na.rm = TRUE)
+            } else {
+              mse_enc_CV <- get_xgboost_mse(train=cbind(x_enc_CV,Y=train$y[folds[[iii]]]),
+                                            test=cbind(x_test_enc_CV,Y=train$y[-folds[[iii]]]))
+            }
 
-            forest_enc_CV <- regression_forest(x_enc_CV, train$y[folds[[iii]]])
-            mse_enc_CV <- mean((predict(forest_enc_CV,x_test_enc_CV)$predictions - train$y[-folds[[iii]]])^2, na.rm = TRUE)
             fold_mses <- c(fold_mses,mse_enc_CV)
             print(paste0("CV ... ",iii))
           }

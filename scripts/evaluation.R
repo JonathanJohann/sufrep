@@ -3,6 +3,7 @@ library(grf)
 library(caret)
 library(glmnet)
 library(xgboost)
+library(tidyverse)
 
 time_seed <- function() {
   as.integer((as.numeric(Sys.time()) * 1e+07) %% 1e+07)
@@ -10,14 +11,14 @@ time_seed <- function() {
 
 model = "regression_forest"
 
-encoding_methods <- c("mnl")
+encoding_methods <- c("means")#"mnl")
 method <- sample(encoding_methods, 1)
 n <- 10000
 p <- 20
 k <- 10
 ngl <- 100#sample(c(50, 100), 1)
 pl <- .9
-type <- "global"
+type <- "hermite"#"latent"#"global"
 filename <- paste0(method, "_", time_seed(), ".csv", collapse = "")
 
 num_comp <- c(5,10,15)
@@ -61,9 +62,15 @@ for (i in seq(10)) {
           x_enc_CV <- enc_method_CV(train$x[folds[[iii]],], train$g[folds[[iii]]])
 
           x_test_enc_CV <- enc_method_CV(train$x[-folds[[iii]],], train$g[-folds[[iii]]])
+          if(model=="regression_forest"){
+            forest_enc_CV <- regression_forest(x_enc_CV, train$y[folds[[iii]]])
+            mse_enc_CV <- mean((predict(forest_enc_CV,x_test_enc_CV)$predictions - train$y[-folds[[iii]]])^2, na.rm = TRUE)
+          } else {
+            mse_enc_CV <- get_xgboost_mse(train=cbind(x_enc_CV,
+                                                      Y=train$y[folds[[iii]]]),
+                                          test=cbind(x_test_enc_CV,test$y[-folds[[iii]]]))
+          }
 
-          forest_enc_CV <- regression_forest(x_enc_CV, train$y[folds[[iii]]])
-          mse_enc_CV <- mean((predict(forest_enc_CV,x_test_enc_CV)$predictions - train$y[-folds[[iii]]])^2, na.rm = TRUE)
           fold_mses <- c(fold_mses,mse_enc_CV)
           print(paste0("CV ... ",iii))
         }
