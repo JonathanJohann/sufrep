@@ -5,29 +5,41 @@ library(glmnet)
 library(xgboost)
 library(tidyverse)
 
-type <- "ames"
-filename <- paste0(type, "_", time_seed(), ".csv", collapse = "")
+
 model = "xgboost"
 num_comp <- c(5,10,15)
 
 #==========================
-df <- sufrep::ames
-data <- list(x = df[,-c(13,78)],
-             y = df$SalePrice,
-             g = factor(df$Neighborhood))
+df1 <- sufrep::ames
+data1 <- list(x = df1[,-c(13,78)],
+             y = df1$SalePrice,
+             g = factor(df1$Neighborhood))
 
 #==========================
-#df <- sufrep::pakistan
-#data <- list(x = df[,-c(1,12)],
-#             y=df[,1],
-#             g=factor(df[,12]))
+df2 <- sufrep::pakistan
+data2 <- list(x = df2[,-c(1,12)],
+             y=df2[,1],
+             g=factor(df2[,12]))
 
 
 #==========================
-#df <- sufrep::kingcounty
-#data <- list(x= df[,-c(1,15)],
-#             y=df[,1],
-#             g=factor(df[,15]))
+df3 <- sufrep::kingcounty
+data3 <- list(x= df3[,-c(1,15)],
+             y=df3[,1],
+             g=factor(df3[,15]))
+
+d <- sample(c(1:3),1)
+if(d==1){
+  data <- data1
+  type <- "ames"
+} else if(d==2){
+  data <- data2
+  type="pakistan"
+} else if(d==3){
+  data <- data3
+  type="kingcounty"
+}
+filename <- paste0(type, "_",model, ".csv", collapse = "")
 p = ncol(data$x)
 set.seed(123123)
 start <- Sys.time()
@@ -35,6 +47,7 @@ methods <-c("means","low_rank","sparse_low_rank","mnl",
             "multi_permutation","permutation","simple_effect",
             "helmert","deviation","repeated_effect","fisher",
             "difference")
+methods <- c(sample(methods,1))
 results <- c()
 pvals <- c()
 for (iz in 1:length(methods)) {
