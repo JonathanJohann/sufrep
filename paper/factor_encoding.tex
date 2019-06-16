@@ -13,7 +13,7 @@
 
 %%%%%%%%%%%%%%% for independence symbol
 \usepackage{graphicx}
-\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+%\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
 
 %%%%%%%%%%%%%%% added for the algorithm portion
 
@@ -299,7 +299,7 @@ Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matr
 is left-invertible. Then, the $p$-dimensional vectors $\omega(g) := \EE{X_{i} \cond G_i = g}$ are sufficient representations of each category in the sense of \eqref{eq:repr}:
 \begin{equation}
 \label{eq:explicit_mom}
-%\mu(x, \, g) &= \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
+\mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
 \end{equation}
 \end{lemm}
 
@@ -368,7 +368,7 @@ Lemma \ref{lemm:lowrank} shows that if indeed there are only $k$ latent groups, 
 Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matrix $A$ defined~by $(A)_{tj} := \EE{X_{it} \cond L_{i} = g}$
 is left-invertible. Then, the $k$-dimensional vectors $\omega(g) := \EE{X_{i} \cond G_i = g}$ are sufficient representations of each category in the sense of \eqref{eq:repr}:
 \begin{equation}
-\label{eq:explicit_mom}
+\label{eq:lowrank}
 \mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
 \end{equation}
 \end{lemm}
@@ -436,7 +436,7 @@ P(G_{i}|X_{i}) = \Lambda_{\theta}(G_{i}=g | X_{i}) =  \frac{\exp(X_{i}^{T} \thet
   \centering
   \includegraphics[width=\textwidth]{figures/mnl.pdf}
   \caption{Implementation example of the \emph{mnl} encoding.}
-  \label{fig:lowrank_encoding}
+  \label{fig:mnl_encoding}
 \end{figure}
 
 
@@ -560,7 +560,7 @@ While the performance improvements over one hot encoding for 2 latent groups ran
 	\centering
 	\includegraphics[width=\linewidth]{figures/xgboost_sims.png}
 	\caption {Percent Improvement over One Hot Encoding for XGBoost.}
-	\label{tab:rf_sim_setups}
+	\label{tab:xgb_sim_setups}
 \end{figure*}
 
 
@@ -621,7 +621,7 @@ We can see that for Regression Forests on average there is an improvement over o
 		\hline
 	\end{tabular}
 	\caption{Observational Dataset Results for Regression Forests.}
-	\label{tab:observational}
+	\label{tab:observational_rf}
 \end{table}
 For Regression Forests, on average, it looks like low rank approaches to generating encodings were most robust across data sets. This could be due to the reduction in dimensionality which may be beneficial  for two reasons. First, the underlying relationships were much lower rank than the number of covariates and these methods were able to capture this information. Second, if there was no signal in the categorical variable to begin with, the low rank approaches which utilize K-fold to determine the dimensionality of the encoding are able to pick small $k$ number of encoding vectors to reduce the potential noise covariates one would be adding.
 
@@ -647,7 +647,7 @@ For Regression Forests, on average, it looks like low rank approaches to generat
 		\hline
 	\end{tabular}
 	\caption{Observational Dataset Results for XGBoost.}
-	\label{tab:observational}
+	\label{tab:observational_xgb}
 \end{table}
 
 
@@ -922,9 +922,9 @@ In the Ames dataset, we remove the features ``PoolQC", ``GarageQual", and ``Gara
 
 %We remove all missing data rows which primarily existed in the Ames data set and select a subset of the input covariates for the Pakistan data set in order to reduce the number of perfectly correlated or almost perfectly correlated variables that frequently occurred in the data.
 
-
-\bibliographystyle{plainnat}
 \bibliography{references}
+\bibliographystyle{plainnat}
+
 
 
 \end{document}
