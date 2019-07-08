@@ -86,14 +86,92 @@ linear_global_response <- function(alpha, x, beta) {
 
 
 linear_latent_response <- function(latent, alpha, x, betas) {
-  if (dim(betas)[1] == 1) stop("Argument beta must multiple rows.")
+  if (dim(betas)[1] == 1) stop("Argument beta must have multiple rows.")
   n <- length(alpha)
   y <- alpha + apply(x * betas[latent, ], 1, sum) + rnorm(n)
   y
 }
 
+nonlinear_latent_group <- function(alpha,x,betas) {
+  #if (dim(betas)[1] == 1) stop("Argument beta must have multiple rows.")
+  n <- dim(x)[1]
+  p <- dim(x)[2]
+  bp <- length(betas)
+  V <- matrix(0, ncol = bp,nrow=p)
+  for(i in 1:bp){
+    ind <- sample(p,size=2,replace=FALSE)
+    V[ind,i] <- 1
+  }
+  xb <- x %*% V %*% matrix(betas,nrow=bp,ncol=1)
+  xb <- apply(xb, 2, function(x) x / sqrt(sum(x^2))) #this is wrong..., doesn't matter, we don't want it
+  alpha + x %*% V %*% matrix(betas,nrow=bp,ncol=1) + rnorm(n)
+}
 
-generate_basis = function(X, order=3) {
+nonlinear_latent_response <- function(latent,alpha,x,betas) {
+  num_latents <- length(unique(latent))
+  Y <- matrix(0,nrow=dim(x)[1],ncol=1)
+  for(i in 1:num_latents){
+    ind <- which(latent==i)
+    Y[ind,] <- nonlinear_latent_group(alpha[i],x[ind,],betas[i,])
+  }
+  Y
+}
+
+dyadic_response <- function(latent,alpha,x,betas) {
+  n = dim(x)[1]
+  W <- stats::rbinom(n,size=1,prob=0.5)
+  B.dyad <- dyadic.basis(x, W, as.integer(n/2))
+  p2 = dim(B.dyad)[2]
+  Y <- matrix(0,nrow=n,ncol=1)
+  for(i in 1:length(unique(latent))){
+    ind <- which(latent==i)
+    beta <- matrix(rnorm(p2),ncol=1,nrow=p2)
+    xb <- B.dyad[ind,] %*% beta
+    xb <- apply(xb,2,function(x) x/sqrt(sum(x^2)))
+    xb <- sqrt(length(ind)) * xb
+    Y[ind] <- alpha[i] + xb + rnorm(length(ind))
+  }
+  Y
+
+}
+
+dyadic.basis = function(A, YA, min.n = 200) {
+  indicator = matrix(1, nrow(A), 1)
+
+  # stop splitting
+  if (nrow(A) <= min.n / 2) {
+    return(indicator)
+  } else if (nrow(A) <= min.n) {
+    # just one more greedy split
+    improvement = sapply(1:ncol(A), function(j) {
+      med.j = median(A[,j])
+      if(max(A[,j]) == med.j) return (0)
+      (mean(YA[A[,j] <= med.j]) - mean(YA[A[,j] > med.j]))^2
+    })
+    if (max(improvement) == 0) {
+      return(indicator)
+    }
+    # do the greedy split
+    j.max = which.max(improvement)
+    med.j.max = median(A[,j.max])
+    is.left = (A[,j.max] <= med.j.max)
+    return(cbind(indicator, as.numeric(is.left), as.numeric(!is.left)))
+  }
+  sub.basis = lapply(1:ncol(A), function(j) {
+    med.j = median(A[,j])
+    if(max(A[,j]) == med.j) return (rep(1, nrow(A)))
+    is.left = (A[,j] <= med.j)
+    left = dyadic.basis(A[is.left,], YA[is.left], min.n)
+    right = dyadic.basis(A[!is.left,], YA[is.left],  min.n)
+    all = matrix(0, nrow(A), ncol(left) + ncol(right))
+    all[is.left, 1:ncol(left)] = left
+    all[!is.left, ncol(left) + 1:ncol(right)] = right
+    all
+  })
+  cbind(indicator, Reduce(cbind, sub.basis))
+}
+
+generate_basis = function(X, order=2) {
   H = lapply(1:ncol(X), function(j) {
     sapply(1:order, function(k) EQL::hermite(X[,j], k, prob = TRUE) / sqrt(factorial(k)))
   })
@@ -148,11 +226,15 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
     y <- linear_latent_response(latent, alpha, x, beta)
   } else if (type == "hermite") {
     alpha <- rep(0, length(latent))
-    xt <- generate_basis(x, order = 3)
+    xt <- generate_basis(x, order = 2)
     active <- sample.int(dim(xt)[2], replace = F, size = p)
     beta <- sample_beta_hermite(k, p)
     xt_active <- xt[,active]
     y <- linear_latent_response(latent, alpha, xt_active, beta)
+  } else if (type == "nonlinear") {
+    alpha <- sample_alpha(latent)
+    beta <- sample_beta_latent(k, 2*p)
+    y <- dyadic_response(latent, alpha, x, beta)
   } else {
     stop("Bad method name.")
   }
@@ -165,3 +247,4 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
                beta = beta)
   data
 }
+
