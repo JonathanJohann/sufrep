@@ -15,16 +15,16 @@ encoding_methods <- c("means")#"mnl")
 method <- sample(encoding_methods, 1)
 n <- 10000
 p <- 20
-k <- 10
+k <- 2
 ngl <- 100#sample(c(50, 100), 1)
 pl <- .9
-type <- "hermite"#"latent"#"global"
+type <- "nonlinear"#"nonlinear"#"latent"#"hermite"#"latent"#"global"
 filename <- paste0(method, "_", time_seed(), ".csv", collapse = "")
 
 num_comp <- c(5,10,15)
 
 start <- Sys.time()
-for (i in seq(10)) {
+for (i in seq(1)) {
   print(i)
   try({
     data <- create_data(n, p, k, ngl = ngl, pl = pl, type = type)
@@ -108,8 +108,8 @@ for (i in seq(10)) {
       mse_onehot <- get_xgboost_mse(train=cbind(x_onehot,data.frame(Y=train$y)),
                                     test=cbind(x_test_onehot,data.frame(Y=test$y)))
     }
-
-    config <- cbind(n, p, k, ngl, pl, method, model,type, other = NA, mse_enc, mse_onehot)
+    rsq <- cor(test$y,predict(forest_enc,x_test_enc)$predictions)^2
+    config <- cbind(n, p, k, ngl, pl, method, model,type, other = NA, mse_enc, mse_onehot,rsq)
     write.table(config, file = filename, append = T, col.names = F, sep = ",")
   })
   end <- Sys.time()
