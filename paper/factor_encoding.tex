@@ -73,7 +73,7 @@
 \maketitle
 
 \begin{abstract}
-    \noindent Many learning algorithms require that categorical data be transformed into real vectors before it can be used as input. Often, categorical variables are encoded as \emph{one-hot} or \emph{dummy} vectors. However, this mode of representation can be wasteful since it adds many low-signal regressors, especially when the number of categorical levels is large.  In this paper, we investigate simple alternative solutions for universally consistent estimators that rely on lower-dimensional real-valued categorical representations that are \emph{sufficient} in the sense that no predictive information is lost. We then compare different methods via simulations and an empirical application.
+    \noindent Many learning algorithms require categorical data to be transformed into real vectors before it can be used as input. Often, categorical variables are encoded as \emph{one-hot} or \emph{dummy} vectors. However, this mode of representation can be wasteful since it adds many low-signal regressors, especially when the number of unique categories is large.  In this paper, we investigate simple alternative solutions for universally consistent estimators that rely on lower-dimensional real-valued representations of categorical variables that are \emph{sufficient} in the sense that no predictive information is lost. We then compare preexisting and proposed methods on simulated and observational datasets.
 \end{abstract}
 
 
@@ -81,8 +81,8 @@
 \section{Introduction}
 
 Many regression problems involve data collected from a number groups that may be statistically relevant.
-For example, in a medical setting we may want to model health outcomes using data on patients from
-several hospitals, and acknowledge that different hospitals may have idiosyncratic effects on patients
+For example, in a medical setting, we may want to model health outcomes using data on patients from
+several hospitals and acknowledge that different hospitals may have idiosyncratic effects on patients
 that are not explained by other covariates. Similar considerations arise when working with data on
 students from different schools, voters from different zip-codes, employees at different firms, etc.
 
@@ -151,7 +151,7 @@ made in this paper is what we call the \emph{sufficient latent state assumption}
 associated with latent variables $L_i$ that do have a direct effect on $Y_i$.
 For example, in the case of patients spread across hospitals, we assume that hospitals themselves do not
 directly \emph{cause} health outcomes $Y_i$; however, hospitals may still be \emph{predictive} of
-$Y_i$ through their association with latent causal variables. For example, patients may have unobserved
+$Y_i$ through their association with latent causal variables. Patients may have unobserved
 characteristics, e.g., severity of disease or socioeconomic resources, that both affect $Y_i$ and lead the
 patient to self-select into different hospitals. Our main result is that, under this sufficient latent state
 assumption, practical representations of the form \eqref{eq:repr} exist and can be learned from data.
@@ -237,11 +237,11 @@ performance using carefully crafted representations that leverage continuous cov
 
 Our \emph{sufficient latent state} assumption presented in the introduction and depicted in the causal graph \ref{fig:graph_simple} implies that the distribution of the outcome $Y_{i}$ only depends on the observable factor $G_{i}$ through some unobservable latent variable $L_{i}$. In other words, if we knew the value of $L_{i}$, then also knowing $G_{i}$ would give us no additional information about the outcome. For a simple example, one may posit that a patient's underlying health status ($L_{i} \in \{\text{good}, \text{poor}\}$) may simultaneously determine to which hospital they are admitted ($G_{i}$), what symptoms ($X_i$) they exhibit, and what health outcomes outcomes ($Y_i$) they attain. Conditioned on the underlying health status, the hospital cannot provide any additional information about any of the other variables. Conversely, learning their hospital is only helpful inasmuch it allows us to infer something about their health status.
 
-The following lemma states that we can say further characterize \emph{how} the information about the categorical variable $G_{i}$ enters the model: the conditional expectation function of the outcome depends only on the \emph{conditional probabilities of the latent variable given the observable category}. This fact will be crucial when deriving the representation methods in future sections.
+The following lemma states that we can characterize \emph{how} the information about the categorical variable $G_{i}$ enters the model: the conditional expectation function of the outcome depends only on the \emph{conditional probabilities of the latent variable given the observable category}. This fact will be crucial when deriving the representation methods in future sections.
 
 \begin{lemm}
 \label{lemm:repr}
-Suppose that the latent state $L_i$ is discrete with $k$ possible levels, and that the probabilistic structure require by the sufficient latent state assumption (Figure \ref{fig:graph_simple}) holds. Then,
+Suppose that the latent state $L_i$ is discrete with $k$ possible levels, and that the probabilistic structure required by the sufficient latent state assumption (Figure \ref{fig:graph_simple}) holds. Then,
 \begin{equation}
 \label{eq:psi}
 \psi: \gcal \rightarrow \RR^k, \ \ \psi_l(g) = \PP{L_i = l \cond G_i = g}
@@ -286,7 +286,7 @@ Figure \ref{fig:means_intuition} provides an intuitive explanation for why we sh
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/means_intuition.pdf}
-  \caption{Intution for the \emph{means} encoding on an illustrative data. Here, categories $(A,B)$ and $(C,D)$ are more strongly associated with different latent groups.}
+  \caption{Intution for the \emph{means} encoding on illustrative data. Here, categories $(A,B)$ and $(C,D)$ are associated with separate latent groups.}
   \label{fig:means_intuition}
 \end{figure}
 
@@ -295,7 +295,7 @@ The next lemma presents the conditions in which this representation provides a s
 
 \begin{lemm}
 \label{lemm:means}
-Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matrix $A$ defined~by $(A)_{tj} := \EE{X_{it} \cond L_{i} = g}$
+Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matrix $A$ defined~by $(A)_{tj} := \EE{X_{it} \cond L_{i} = l}$
 is left-invertible. Then, the $p$-dimensional vectors $\omega(g) := \EE{X_{i} \cond G_i = g}$ are sufficient representations of each category in the sense of \eqref{eq:repr}:
 \begin{equation}
 \label{eq:explicit_mom}
@@ -343,7 +343,7 @@ is left-invertible. Then, the $p$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \subsection{Low-rank encodings}
 \label{subsec:lowrank}
 
-The \emph{means} encoding method may efficiently summarize the effect of the categorical variables if the continuous covariates are reasonably low-dimensional so that $p \ll M$. When $p$ is large, it might be beneficial to use lower-dimensional representation of the conditional means. We suggest two  \emph{low-rank encoding methods}, both involving matrix factorization methods of the matrix $\Omega$ of group-wise means of the continuous variables $(\Omega)_{jg} = E[X_{ij} | G=g]$.
+The \emph{means} encoding method may efficiently summarize the effect of the categorical variables if the continuous covariates are reasonably low-dimensional so that $p \ll M$. When $p$ is large, it might be beneficial to use a lower-dimensional representation of the conditional means. We suggest two  \emph{low-rank encoding methods}, both involving matrix factorization of our group-wise means matrix $\Omega$ of the continuous covariates where $(\Omega)_{jg} = E[X_{ij} | G=g]$.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/lowrank_encoding.pdf}
@@ -353,13 +353,13 @@ The \emph{means} encoding method may efficiently summarize the effect of the cat
 
 One alternative is to consider the factorization of the group-wise means matrix $\Omega$ using singular value decomposition $\Omega = U D V^{T}$. Then we can use the first $k$ columns of the $g^{th}$ row of the left-singular vector matrix $U$ as the representation for the $g^{th}$ category. Note that in practice, we will be working with the empirical counterpart $\hOmega$ and $k$ is in general unknown, so we recommend using cross-validation. Figure \ref{fig:lowrank_encoding} provides an illustration.
 
-A second low-rank alternative is to use the sparse principal component analysis (SPCA) method of \cite{zou2006sparse}. As the name suggests, this method extends the original PCA algorithm by applying an elastic-net-style penalty on the coefficients of the loadings matrix. The result is that the matrix $\Omega$ is approximated by a sparse linear combination of vectors.\footnote{Formally, for a given matrix $M$, the sparse PCA method solves the problem \citep[~eq. 3.12]{zou2006sparse},
+A second low-rank alternative is to use sparse principal component analysis (SPCA) method \cite{zou2006sparse} instead of SVD. As the name suggests, this method extends the original PCA algorithm by applying an elastic-net-style penalty on the coefficients of the loadings matrix. The result is that the matrix $\Omega$ is approximated by a sparse linear combination of vectors.\footnote{Formally, for a given matrix $M$, the sparse PCA method solves the problem \citep[~eq. 3.12]{zou2006sparse},
 \begin{align}
     (\hat{A},\hat{B}) = \arg\min_{A,B} &\sum_{i=1}^n ||M_i - AB^TM_i||^2+ \lambda \sum_{j=1}^k ||B_{\cdot,j} ||_{2}^2 + \sum_{j=1}^k \lambda_{1,j} ||B_{\cdot,j}||_1\\
     \text{s.t.} \quad & A^TA = I_{k \times k}
     \label{eq:sparse_pca}
 \end{align}
-} This sort of sparsity can be advantageous for two reasons. First, sparse PCA creates sparse principal component vectors which can be potentially more interpretable. Second, if our universal estimator is a tree-based models such as random forest \cite{breiman2001random} or xgboost \cite{chen2016xgboost}, which fit to data by considering singular covariates at any point in the model, it may have difficulty taking advantage of dense principal components due to the rotation of the original covariate space. That is, if a tree would have a been able to produce a good split by using each variable separately, it may not be able to do the same if the variables are combined linearly. On the other hand, sparse PCA requires additional tuning of the $\lambda$ parameters via cross-validation.
+} This sort of sparsity can be advantageous for two reasons. First, sparse PCA creates principal component sparse vectors which can be potentially more interpretable. Second, if our universal estimator is a tree-based model such as random forest \cite{breiman2001random} or xgboost \cite{chen2016xgboost}, which fit to data by considering singular covariates at any point in the model, it may have difficulty taking advantage of dense principal components due to the rotation of the original covariate space. That is, if a tree would have a been able to produce a good split by using each variable separately, it may not be able to do the same if the variables are combined linearly. On the other hand, sparse PCA requires additional tuning of its regularization parameter $\lambda$ which can be done via cross-validation.
 
 Lemma \ref{lemm:lowrank} shows that if indeed there are only $k$ latent groups, then a representation that uses only the first $k$ columns of the left singular matrix or the first $k$ sparse principal components is indeed sufficient. As with the \emph{means} method, we rely on the universal consistency property of our estimator to learn a nonlinear mapping.
 
@@ -440,7 +440,7 @@ P(G_{i}|X_{i}) = \Lambda_{\theta}(G_{i}=g | X_{i}) =  \frac{\exp(X_{i}^{T} \thet
 \end{figure}
 
 
-A related work that also uses regression coefficients as categorical representations is the natural language processing \emph{word2vec} model of \cite{mikolov2013efficient}. The authors of \emph{word2vec} propose two methods to represent words (categories) in a large corpus as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is the one that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we consider the continuous vectors $X_{i}$ stand in as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $X_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
+A related work that also uses regression coefficients as categorical representations is the natural language processing \emph{word2vec} model of \cite{mikolov2013efficient}. The authors of \emph{word2vec} propose two methods to represent words (categories) in a large corpus of text as relatively low-dimensional real-valued vectors. In one of these methods, each word is initially assigned two representations: as a center word $v_{w}$, and as a surrounding \emph{context} word $v_{c}$. Then, the authors posit that the optimal representation is the one that maximizes the log-probability of the inner product of the two representations $v_{w}^{T}v_{c}$ for all pair of words $(w, c)$ that co-occur near each other. Our method works in an analogous way if we let the continuous vectors $X_{i}$ stand in as ``contexts'', and let $\theta_{g} \in \mathbb{R}^{p}$ represent each category, since then maximizing the log-probability of the inner product $X_{i}^{T}\theta_{g}$ is the same as maximizing the multinomial logistic regression above.
 
 
 \begin{lemm}
@@ -485,7 +485,7 @@ In the following section, we explore each method's effectiveness relative to one
 
 We consider two simulations designs that share the distributions of latent groups $L_{i}$, observable groups $G_{i}$ and covariates $X_{i}$, but whose outcome models for $Y_{i}$ differ.
 
-\paragraph{Latent groups, observable groups and continuous covariates} Latent groups $L_{i}$ is drawn uniformly from the set of available groups, which we identify with integers.
+\paragraph{Latent groups, observable groups and continuous covariates} A latent group $L_{i}$ is drawn uniformly from the set of available groups, which we identify with integers.
 \begin{align}
     L_{i} \sim \text{Uniform}(\{1,...,|\mathcal{L}|\})
     \label{eq:latent_groups}
@@ -514,27 +514,44 @@ Covariates associated with latent group $L_{i} = \ell$ are normally distributed 
   (\Sigma)_{kj} = \left(\frac{1}{2}\right)^{|k - j|}
 \end{align}
 
-\paragraph{Outcomes} In the \emph{latent linear} setup, the outcome model is linear in regressors conditional on coefficients that are specific to each latent group.
+\paragraph{Outcomes} For the outcome setups, we make each scenario noticeably more complex than the last. In the \emph{global linear} setup, each latent group has its own intercept while the slope $\beta$ is the same across latent groups. 
 \begin{align}
-  Y_{i} &= \alpha_{\ell} + X_{i}^{T}\beta_{\ell} + \epsilon_{i} \label{eq:linear_outcome}
+  Y_{i} &= \alpha_{\ell} + X_{i}^{T}\beta + \epsilon_{i} \label{eq:linear_outcome}
 \end{align}
 where the intercept and slopes are created as follows. The slope normalization ensures that the signal from the intercept, regressors and noise is roughly comparable.
 \begin{align}
 \alpha_{\ell} &\sim Laplace(1) \quad \text{for each }\ell \in \mathcal{L} \label{eq:intercept} \\
-\tilde{\beta}_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta_{\ell} = \frac{\tilde{\beta}_{\ell}}{\Norm{\tilde{\beta}_{\ell}}_{2}} \label{eq:slopes} \\
+\tilde{\beta}_{j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta = \frac{\tilde{\beta}}{\Norm{\tilde{\beta}}_{2}} \label{eq:slopes} \\
 \epsilon_{i} &\sim \mathcal{N}(0, 1)
 \end{align}
 
-In the \emph{global linear} setup, only the intercept changes and the slopes are kept fixed across latent groups, so $\beta_{\ell} = \beta_{\ell'}$ for all $\ell, \ell'$.
-
-In the  \emph{hermite} setup, we compute a third-order Hermite polynomial basis $\phi(X_{i})$, then select a subset $\mathcal{J}'$ of ``active'' regressors, with $|\mathcal{J}'| = p$. The outcome is linear in this sparse basis.
+In the \emph{latent linear} setup, we increase the dependence on the latent groups and the outcome model is linear in regressors conditional on coefficients that are specific to each latent group.
 \begin{align}
-  Y_{i} &= \sum_{j \in \mathcal{J'}} \phi_{j}(X_{i})^{T}\beta_{\ell j} + \epsilon_{i}
-  \quad \text{where} \quad
-  \beta_{\ell j} \sim Uniform\left(\left\{-\frac{1}{\sqrt{p}}, +\frac{1}{\sqrt{p}}\right\}\right) \label{eq:hermite_outcome}
+Y_{i} &= \alpha_{\ell} + X_{i}^{T}\beta_{\ell} + \epsilon_{i} \label{eq:latent_outcome}
 \end{align}
-As in the \emph{latent linear} setup, the slopes are specific for each latent group.
+where
+\begin{align}
+\tilde{\beta}_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta_{\ell} = \frac{\tilde{\beta_{\ell}}}{\Norm{\tilde{\beta_{\ell}}}_{2}} \label{eq:latentslopes}
+\end{align}
 
+Finally, in the \emph{latent piecewise linear} setup, we compute a second-order Dyadic basis by partitioning each feature $x_i$ by its median and then assigning different latent group betas ($\beta^+_l$ or $\beta^-_l$) depending on whether or not the observed $x_i$ is above or below its feature's median.
+\begin{align}
+Y_{i} &= \alpha_{\ell} + \sum_{j=1}^p \textbf{1}\{X_{ij} > \text{Med}(x_j)\} \cdot X_{ij}^T \beta_{\ell j}^{+}  + \textbf{1}\{X_{ij} \leq \text{Med}(x_j)\} \cdot X_{ij}^T \beta_{\ell j}^{-} + \epsilon_{i} \label{eq:nonlinear_outcome}
+\end{align}
+where
+\begin{align}
+\tilde{\beta}^+_{\ell j}, \tilde{\beta}^-_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta^{+}_{\ell} = \frac{\tilde{\beta^{+}_{\ell}}}{\Norm{\tilde{\beta^{+}_{\ell}}}_{2}} \qquad \beta^{-}_{\ell} = \frac{\tilde{\beta^{-}_{\ell}}}{\Norm{\tilde{\beta^{-}_{\ell}}}_{2}} \label{eq:nonlinearslopes}
+\end{align}
+
+%only the intercept changes and the slopes are kept fixed across latent groups, so $\beta_{\ell} = \beta_{\ell'}$ for all $\ell, \ell'$.
+
+%In the  \emph{hermite} setup, we compute a third-order Hermite polynomial basis $\phi(X_{i})$, then select a subset $\mathcal{J}'$ of ``active'' regressors, with $|\mathcal{J}'| = p$. The outcome is linear in this sparse basis.
+%\begin{align}
+ % Y_{i} &= \sum_{j \in \mathcal{J'}} \phi_{j}(X_{i})^{T}\beta_{\ell j} + \epsilon_{i}
+  %\quad \text{where} \quad
+  %\beta_{\ell j} \sim Uniform\left(\left\{-\frac{1}{\sqrt{p}}, +\frac{1}{\sqrt{p}}\right\}\right) %\label{eq:hermite_outcome}
+%\end{align}
+%As in the \emph{latent linear} setup, the slopes are specific for each latent group.
 
 
 \subsection{Simulation Results}
@@ -655,7 +672,7 @@ For Regression Forests, on average, it looks like low rank approaches to generat
 % ----------- CONCLUSION --------------
 \section{Conclusion}
 
-In this paper, we explore the task of mapping high-cardinality categorical variables $G_i$ to a lower-dimensional real space without loss of information relevant to our response $Y_i$. To do this, we make an assumption about the relationship between $G_i$ and $Y_i$ which we call the \textit{sufficient latent state assumption}. This assumption provides us with the basis for creating encoding methods which can be used by universally consistent estimators to extract sufficient representations of $G_i$. Among our recommendations for encoding methods, we provide encoding methods which are interpretable or focus more on reducing the size of the  $\mathbb{R}^k$ representation. We find that these methods tend to outperform one hot encoding and other traditional approaches to modeling with categorical variables as the number of categorical levels increases.
+In this paper, we explore the task of mapping high-cardinality categorical variables $G_i$ to a lower-dimensional real space without loss of information relevant to our response $Y_i$. To do this, we make an assumption about the relationship between $G_i$ and $Y_i$ which we call the \textit{sufficient latent state assumption}. This assumption provides us with the basis for creating encoding methods which can be used by universally consistent estimators to extract sufficient representations of $G_i$. Among our recommendations for encoding methods, we provide encoding methods which are interpretable or focus more on reducing the size of the  $\mathbb{R}^k$ representation. We find that these methods tend to outperform one hot encoding and other traditional approaches to modeling with categorical variables as the number of unique categories  increases.
 
 
 
