@@ -534,13 +534,13 @@ where
 \tilde{\beta}_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta_{\ell} = \frac{\tilde{\beta_{\ell}}}{\Norm{\tilde{\beta_{\ell}}}_{2}} \label{eq:latentslopes}
 \end{align}
 
-Finally, in the \emph{latent piecewise linear} setup, we compute a second-order Dyadic basis by partitioning each feature $x_i$ by its median and then assigning different latent group betas ($\beta^+_l$ or $\beta^-_l$) depending on whether or not the observed $x_i$ is above or below its feature's median.
+Finally, in the \emph{latent piecewise linear} setup, we compute a dyadic basis by partitioning each feature $X_i$ by its median and then assigning different latent group betas ($\beta^+_l$ or $\beta^-_l$) depending on whether or not the observed $X_i$ is above or below its feature's median.
 \begin{align}
 Y_{i} &= \alpha_{\ell} + \sum_{j=1}^p \textbf{1}\{X_{ij} > \text{Med}(x_j)\} \cdot X_{ij}^T \beta_{\ell j}^{+}  + \textbf{1}\{X_{ij} \leq \text{Med}(x_j)\} \cdot X_{ij}^T \beta_{\ell j}^{-} + \epsilon_{i} \label{eq:nonlinear_outcome}
 \end{align}
 where
 \begin{align}
-\tilde{\beta}^+_{\ell j}, \tilde{\beta}^-_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta^{+}_{\ell} = \frac{\tilde{\beta^{+}_{\ell}}}{\Norm{\tilde{\beta^{+}_{\ell}}}_{2}} \qquad \beta^{-}_{\ell} = \frac{\tilde{\beta^{-}_{\ell}}}{\Norm{\tilde{\beta^{-}_{\ell}}}_{2}} \label{eq:nonlinearslopes}
+\tilde{\beta}^+_{\ell j}, \tilde{\beta}^-_{\ell j} &\sim \text{Uniform}(\{0, 1, -1\}) \qquad \beta^{+}_{\ell} = \frac{\tilde{\beta}^{+}_{\ell}}{\Norm{\tilde{\beta}^{+}_{\ell}}_{2}} \qquad \beta^{-}_{\ell} = \frac{\tilde{\beta}^{-}_{\ell}}{\Norm{\tilde{\beta}^{-}_{\ell}}_{2}} \label{eq:nonlinearslopes}
 \end{align}
 
 %only the intercept changes and the slopes are kept fixed across latent groups, so $\beta_{\ell} = \beta_{\ell'}$ for all $\ell, \ell'$.
@@ -557,7 +557,7 @@ where
 \subsection{Simulation Results}
 \label{sec:simulation_results}
 
-For each simulated dataset, we estimated the outcome using the various methods described in Section \ref{sec:categorical_encoding}, and then evaluated the predictions by their mean squared error. We simulated each simulation setup and model until the standard errors showed the results to be significantly nonzero or zero. 
+For each simulated dataset, we estimated the outcome using the various methods described in Section \ref{sec:categorical_encoding}, and then evaluated the predictions by their mean squared error. We simulated each simulation setup and model for 200 randomly generated seeds. 
 
 
 \begin{figure*}[htbp]
@@ -567,16 +567,16 @@ For each simulated dataset, we estimated the outcome using the various methods d
 	\label{tab:rf_sim_setups}
 \end{figure*}
 
-Results for the simulations are provided in \ref{tab:rf_sim_setups}. We find that the methods described above which seek to estimate the latent groups consistently outperform methods which require adding $|\gcal|$ additional columns to our input matrix $X$ for both the Regression Forest and XGBoost. In particular, it appears that the sparse low rank approach tends to do well when the number of latent groups is very small. For a larger number of latent groups, we see that low rank approaches underperform and the multinomial and means encoding perform better. We also take note on how the multinomial weight approach potentially does well in this case possibly because $n$ is large and the number of observations per group is high enough to satisfy this data hungry approach. 
+Results for the simulations are provided in \ref{tab:rf_sim_setups}. We find that the methods described above which seek to estimate the latent groups consistently outperform methods which require adding $|\gcal|$ additional columns to our input matrix $X$ for both the regression forest and xgboost. In particular, it appears that the sparse low rank approach tends to do well when the number of latent groups is very small. For a larger number of latent groups, we see that low rank approaches underperform and the multinomial and means encoding perform better. We also take note on how the multinomial weight approach potentially does well in this case possibly because $n$ is large and the number of observations per group is high enough to satisfy this approach. 
 
-For the methods that do not take advantage of the low rank structure, we notice that the main improvement in performance for Regression Forests and XGBoost occurs due to the immense reduction in dimensionality. We find that the permutation, fisher, and multiple permutation methods are on average much better than the methods that add $|\gcal|$ columns but still slightly fall behind the methods that estimate the latent groups. 
+For the methods that do not take advantage of the low rank structure, we notice that the main improvement in performance for regression forests and xgboost occurs due to the reduction in dimensionality. We find that the permutation, fisher, and multiple permutation methods are on average much better than the methods that add $|\gcal|$ columns but still underperform relative to the methods that estimate the latent groups. 
 
-While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for Regression Forests and XGBoost due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. Furthermore, we find that a more expressive method like XGBoost benefits slightly less from these encoding methods. 
+While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for regression forests and xgboost due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. Furthermore, we find that a more complex and nonlinear method like xgboost benefits slightly less from these encoding methods. 
 
 \begin{figure*}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{figures/xgboost_sims.png}
-	\caption {Percent Improvement over One Hot Encoding for XGBoost.}
+	\caption {Percent Improvement over One Hot Encoding for xgboost.}
 	\label{tab:xgb_sim_setups}
 \end{figure*}
 
@@ -619,7 +619,7 @@ The data itself came with 21 covariates including the sale price of the house. W
 \subsection{Empirical Results}
 
 
-We can see that for Regression Forests on average there is an improvement over one hot encoding and XGBoost stands to benefit less from using these encoding methods over one hot encoding. For Regression Forests, the primary case that does not benefit much from these approaches is the Ames data set which follows naturally since the number of covariates $p$ is much larger than the number of observed groups $|\gcal|$. Therefore, methods such as means and MNL are adding $80$ dimensions to the prediction problem while one hot encoding only adds $25$. The Low Rank and Sparse Low Rank approaches benefit in these cases and appear to maintain potentially promising results. Contrary to the Regression Forest results, most of the XGBoost output was not statistically significantly different than one hot encoding and the Ames data set was the closest evidence to any benefit.
+We can see that for Regression Forests on average there is an improvement over one hot encoding and xgboost stands to benefit less from using these encoding methods over one hot encoding. For regression forests, the primary case that does not benefit much from these approaches is the Ames data set which follows naturally since the number of covariates $p$ is much larger than the number of observed groups $|\gcal|$. Therefore, methods such as means and MNL are adding $80$ dimensions to the prediction problem while one hot encoding only adds $25$. The Low Rank and Sparse Low Rank approaches benefit in these cases and appear to maintain potentially promising results. Contrary to the regression forest results, most of the xgboost output was not statistically significantly different than one hot encoding and the Ames data set was the closest evidence to any benefit.
 
 \begin{table}[H]
 	\centering
@@ -640,7 +640,7 @@ We can see that for Regression Forests on average there is an improvement over o
 	\caption{Observational Dataset Results for Regression Forests.}
 	\label{tab:observational_rf}
 \end{table}
-For Regression Forests, on average, it looks like low rank approaches to generating encodings were most robust across data sets. This could be due to the reduction in dimensionality which may be beneficial  for two reasons. First, the underlying relationships were much lower rank than the number of covariates and these methods were able to capture this information. Second, if there was no signal in the categorical variable to begin with, the low rank approaches which utilize K-fold to determine the dimensionality of the encoding are able to pick small $k$ number of encoding vectors to reduce the potential noise covariates one would be adding.
+For regression forests, on average, it looks like low rank approaches to generating encodings were most robust across data sets. This could be due to the reduction in dimensionality which may be beneficial  for two reasons. First, the underlying relationships were much lower rank than the number of covariates and these methods were able to capture this information. Second, if there was no signal in the categorical variable to begin with, the low rank approaches which utilize K-fold to determine the dimensionality of the encoding are able to pick small $k$ number of encoding vectors to reduce the potential noise covariates one would be adding.
 
 %The only setting which is more consistently negative is the King County dataset. For the XGBoost simulations, we see that there is a bigger performance improvement for Ames which is a relatively higher dimensional problem compared to the "King County" and "Pakistan" datasets. For the Regression Forest based evaluation, we see that primarily the methods which provide the most dimensionality reduction are the best performers. This could be likely due to the fact that one hot encoding provides a 25-dimensional increase in the modeling problem while methods like Means and MNL add $p$ additional dimensions where $p$ is decently larger than the number of unique categories.In both setups, the rotation of the covariate space in King County appears to be unfavorable given that the low rank and sparse low rank methods are the worst performers.
 
