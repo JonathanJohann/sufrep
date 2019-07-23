@@ -562,7 +562,7 @@ For each simulated dataset, we estimated the outcome using the various methods d
 
 \begin{figure*}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{figures/rf_sims_output.png}
+	\includegraphics[width=\linewidth]{figures/regression_forest_sims.png}
 	\caption {Percent Improvement over One Hot Encoding for Regression Forests.}
 	\label{tab:rf_sim_setups}
 \end{figure*}
@@ -571,11 +571,11 @@ Results for the simulations are provided in \ref{tab:rf_sim_setups}. We find tha
 
 For the methods that do not take advantage of the low rank structure, we notice that the main improvement in performance for regression forests and xgboost occurs due to the reduction in dimensionality. We find that the permutation, fisher, and multiple permutation methods are on average much better than the methods that add $|\gcal|$ columns but still underperform relative to the methods that estimate the latent groups. 
 
-While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for regression forests and xgboost due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. Furthermore, we find that a more complex and nonlinear method like xgboost benefits slightly less from these encoding methods. 
+While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for regression forests and xgboost due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. The improvement over one hot encoding also tends to increase as the signal becomes more dependent on latent group membership. In most cases, performance on the piecewise linear simulations maintain the same or higher percent improvement over one hot encoding. Furthermore, we find that a more complex and nonlinear method like xgboost benefits slightly less from these encoding methods. 
 
 \begin{figure*}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{figures/xgboost_sims.png}
+	\includegraphics[width=\linewidth]{figures/xgboost_simulation_results.png}
 	\caption {Percent Improvement over One Hot Encoding for xgboost.}
 	\label{tab:xgb_sim_setups}
 \end{figure*}
