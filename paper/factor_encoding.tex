@@ -773,6 +773,26 @@ where these matrices are defined as in the top of this section. The sufficient r
 Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega(g)$ is also a sufficient representation for the category $g$.
 \end{proof}
 
+
+
+\subsubsection{Proof of Lemma \ref{lemm:lowrank}}
+
+\begin{proof} \label{proof:lowrank}
+  The proof is similar to the the previous one. However, this time note that we can decompose $\Omega = U D V^{T}$ using singular value decomposition, where the matrices have dimensions $|\mathcal{G}| \times |\mathcal{G}|$, $|G|\times p$, and $p \times p$ respectively. Letting $u(g) : g \mapsto (U)_{g, \cdot}^{T}$, we can write
+  \begin{align}
+    \psi(g) = A^\dagger u(g)^{T} D V^{T}
+  \end{align}
+  Once again, we separate out the part that depends on the category $g$. Letting $u(g): g \mapsto (U)_{g,1:k}$ row of matrix
+
+  \begin{equation}
+  \label{eq:a}
+    \mu(x, \, g) &= \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger u(g)^{T} D_{1:k,1:k} V^{T})_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
+  \end{equation}
+
+\end{proof}
+
+
+
 \subsubsection{Proof of Lemma \ref{lemm:mnl}} \label{proof:mnl}
 \begin{proof}
 We begin by noting that we can use Bayes' theorem to express $\omega(g) = \EE{ X_{i} \cond G=g }$ as a function of $\PP{G=g \cond X_{i} }$, here is assumed to be multinomial logit.
