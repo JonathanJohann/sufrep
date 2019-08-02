@@ -19,7 +19,6 @@
 
 
 \usepackage[english]{babel}
-\usepackage[utf8]{inputenc}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 
@@ -366,10 +365,10 @@ Lemma \ref{lemm:lowrank} shows that if indeed there are only $k$ latent groups, 
 \begin{lemm}
 \label{lemm:lowrank}
 Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matrix $A$ defined~by $(A)_{tj} := \EE{X_{it} \cond L_{i} = g}$
-is left-invertible. Then, the $k$-dimensional vectors $\omega(g) := \EE{X_{i} \cond G_i = g}$ are sufficient representations of each category in the sense of \eqref{eq:repr}:
+is left-invertible. Then, the $k$-dimensional vectors $u(g) := U_{g,1:k}$ for  are sufficient representations of each category in the sense of \eqref{eq:repr}:
 \begin{equation}
 \label{eq:lowrank}
-\mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
+  \mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger u(g)^{T} D V^{T})_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger u(g)^{T} D V^{T})_l}
 \end{equation}
 \end{lemm}
 
@@ -514,7 +513,7 @@ Covariates associated with latent group $L_{i} = \ell$ are normally distributed 
   (\Sigma)_{kj} = \left(\frac{1}{2}\right)^{|k - j|}
 \end{align}
 
-\paragraph{Outcomes} For the outcome setups, we make each scenario noticeably more complex than the last. In the \emph{global linear} setup, each latent group has its own intercept while the slope $\beta$ is the same across latent groups. 
+\paragraph{Outcomes} For the outcome setups, we make each scenario noticeably more complex than the last. In the \emph{global linear} setup, each latent group has its own intercept while the slope $\beta$ is the same across latent groups.
 \begin{align}
   Y_{i} &= \alpha_{\ell} + X_{i}^{T}\beta + \epsilon_{i} \label{eq:linear_outcome}
 \end{align}
@@ -557,7 +556,7 @@ where
 \subsection{Simulation Results}
 \label{sec:simulation_results}
 
-For each simulated dataset, we estimated the outcome using the various methods described in Section \ref{sec:categorical_encoding}, and then evaluated the predictions by their mean squared error. We simulated each simulation setup and model for 200 randomly generated seeds. 
+For each simulated dataset, we estimated the outcome using the various methods described in Section \ref{sec:categorical_encoding}, and then evaluated the predictions by their mean squared error. We simulated each simulation setup and model for 200 randomly generated seeds.
 
 
 \begin{figure*}[htbp]
@@ -567,11 +566,11 @@ For each simulated dataset, we estimated the outcome using the various methods d
 	\label{tab:rf_sim_setups}
 \end{figure*}
 
-Results for the simulations are provided in \ref{tab:rf_sim_setups}. We find that the methods described above which seek to estimate the latent groups consistently outperform methods which require adding $|\gcal|$ additional columns to our input matrix $X$ for both the regression forest and xgboost. In particular, it appears that the sparse low rank approach tends to do well when the number of latent groups is very small. For a larger number of latent groups, we see that low rank approaches underperform and the multinomial and means encoding perform better. We also take note on how the multinomial weight approach potentially does well in this case possibly because $n$ is large and the number of observations per group is high enough to satisfy this approach. 
+Results for the simulations are provided in \ref{tab:rf_sim_setups}. We find that the methods described above which seek to estimate the latent groups consistently outperform methods which require adding $|\gcal|$ additional columns to our input matrix $X$ for both the regression forest and xgboost. In particular, it appears that the sparse low rank approach tends to do well when the number of latent groups is very small. For a larger number of latent groups, we see that low rank approaches underperform and the multinomial and means encoding perform better. We also take note on how the multinomial weight approach potentially does well in this case possibly because $n$ is large and the number of observations per group is high enough to satisfy this approach.
 
-For the methods that do not take advantage of the low rank structure, we notice that the main improvement in performance for regression forests and xgboost occurs due to the reduction in dimensionality. We find that the permutation, fisher, and multiple permutation methods are on average much better than the methods that add $|\gcal|$ columns but still underperform relative to the methods that estimate the latent groups. 
+For the methods that do not take advantage of the low rank structure, we notice that the main improvement in performance for regression forests and xgboost occurs due to the reduction in dimensionality. We find that the permutation, fisher, and multiple permutation methods are on average much better than the methods that add $|\gcal|$ columns but still underperform relative to the methods that estimate the latent groups.
 
-While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for regression forests and xgboost due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. The improvement over one hot encoding also tends to increase as the signal becomes more dependent on latent group membership. In most cases, performance on the piecewise linear simulations maintain the same or higher percent improvement over one hot encoding. Furthermore, we find that a more complex and nonlinear method like xgboost benefits slightly less from these encoding methods. 
+While the performance improvements over one hot encoding for 2 latent groups ranges from 1-10\%, performance improvement can approach 27-33\% for 10 latent groups. Intuitively, we find that this benefit is generally less prevalent for 2 latent groups for regression forests and xgboost due to the lesser complexity of the underlying relationship as defined by the conditional independence graph in \ref{fig:graph_simple}. The improvement over one hot encoding also tends to increase as the signal becomes more dependent on latent group membership. In most cases, performance on the piecewise linear simulations maintain the same or higher percent improvement over one hot encoding. Furthermore, we find that a more complex and nonlinear method like xgboost benefits slightly less from these encoding methods.
 
 \begin{figure*}[htbp]
 	\centering
@@ -719,7 +718,7 @@ In this paper, we explore the task of mapping high-cardinality categorical varia
 
 We denote the columns of $\Omega$ as $\omega(g)$ and the columns of $\Psi$ as $\psi(g)$.
 
-\paragraph{Overview} Proof \ref{proof:suff} shows that categories $G_{i}$ only enter the conditional expectation function $\mu(x, g)$ through the latent state probabilities $\psi(g) = \PP{L_{i} \cond G_{i} = g}$. Proofs \ref{proof:means}-\ref{proof:mnl} rely on strategies for writing $\psi(g) = f(h(g))$ then showing that $h(g)$ is also a sufficient representation.
+\paragraph{Overview} Proof \ref{proof:suff} shows that categories $G_{i}$ only enter the conditional expectation function $\mu(x, g)$ through the latent state probabilities $\psi(g)$. Proofs \ref{proof:means}-\ref{proof:mnl} rely on strategies for writing $\psi(g) = f(h(g))$ then showing that $h(g)$ is also a sufficient representation.
 
 
 
@@ -782,12 +781,9 @@ Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega
   \begin{align}
     \psi(g) = A^\dagger u(g)^{T} D V^{T}
   \end{align}
-  Once again, we separate out the part that depends on the category $g$. Letting $u(g): g \mapsto (U)_{g,1:k}$ row of matrix
+  Note that $D$ and $V^{T}$ do not depend on the category $g$.
 
-  \begin{equation}
-  \label{eq:a}
-    \mu(x, \, g) &= \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger u(g)^{T} D_{1:k,1:k} V^{T})_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger \omega(g))_l}
-  \end{equation}
+
 
 \end{proof}
 
@@ -941,7 +937,9 @@ For a more in-depth treatment, see \cite{venables2016codingmatrices}. Note that 
 	\end{tabular}
 \end{table}
 
-\paragraph{Fisher} taken from \cite{hastie2009elements}, we order the categories by increasing mean of the response.\\
+\paragraph{Fisher} taken from \cite{hastie2009elements}, we order the categories by increasing mean of the response.
+
+\vspace{.5em}
 
 For the following five methods, we use information about the continuous covariates to construct the mapping $\psi$.
 
