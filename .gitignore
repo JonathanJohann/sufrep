@@ -41,7 +41,6 @@ docs/source/savefig
 
 
 # Tex files.
-*.tex
 *.log
 *.aux
 *.synctex*
