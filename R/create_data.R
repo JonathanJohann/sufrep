@@ -80,7 +80,7 @@ sample_observed_category <- function(latent, map, pl) {
 linear_global_response <- function(alpha, x, beta) {
   if (dim(beta)[1] > 1) stop("Argument beta must have only one row.")
   n <- length(alpha)
-  y <- alpha + x %*% t(beta) + rnorm(n)
+  y <- sqrt(0.1)*alpha + sqrt(0.4)*(x %*% t(beta)) + sqrt(0.5)*rnorm(n)
   c(y)
 }
 

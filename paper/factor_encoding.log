@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.5.8)  2 AUG 2019 22:56
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.5.8)  8 AUG 2019 21:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -208,11 +208,6 @@ File: babel.def 2019/05/04 3.31 Babel common definitions
 \l@australian = a dialect from \language\l@british 
 \l@newzealand = a dialect from \language\l@british 
 ))
-(/usr/local/texlive/2019/texmf-dist/tex/latex/base/inputenc.sty
-Package: inputenc 2018/08/11 v1.3c Input encoding file
-\inpenc@prehook=\toks31
-\inpenc@posthook=\toks32
-)
 (/usr/local/texlive/2019/texmf-dist/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
 nment
@@ -220,7 +215,7 @@ nment
 (/usr/local/texlive/2019/texmf-dist/tex/latex/base/ifthen.sty
 Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
 )
-\@float@every@algorithm=\toks33
+\@float@every@algorithm=\toks31
 \c@algorithm=\count111
 )
 (/usr/local/texlive/2019/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
@@ -247,7 +242,7 @@ Document Style - pseudocode environments for use with the `algorithmicx' style
 (/usr/local/texlive/2019/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfutil-common.te
 x
-\pgfutil@everybye=\toks34
+\pgfutil@everybye=\toks32
 \pgfutil@tempdima=\dimen122
 \pgfutil@tempdimb=\dimen123
 
@@ -269,12 +264,12 @@ Package: pgf 2019/04/04 v3.1.2 (3.1.2)
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgfsys.code.tex
 Package: pgfsys 2019/04/04 v3.1.2 (3.1.2)
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
-\pgfkeys@pathtoks=\toks35
-\pgfkeys@temptoks=\toks36
+\pgfkeys@pathtoks=\toks33
+\pgfkeys@temptoks=\toks34
 
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/utilities/pgfkeysfiltered.c
 ode.tex
-\pgfkeys@tmptoks=\toks37
+\pgfkeys@tmptoks=\toks35
 ))
 \pgf@x=\dimen124
 \pgf@y=\dimen125
@@ -290,9 +285,9 @@ ode.tex
 \c@pgf@countb=\count120
 \c@pgf@countc=\count121
 \c@pgf@countd=\count122
-\t@pgf@toka=\toks38
-\t@pgf@tokb=\toks39
-\t@pgf@tokc=\toks40
+\t@pgf@toka=\toks36
+\t@pgf@tokb=\toks37
+\t@pgf@tokc=\toks38
 \pgf@sys@id@count=\count123
 
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg
@@ -343,9 +338,9 @@ Package: pgfcore 2019/04/04 v3.1.2 (3.1.2)
 \pgfmath@dimen=\dimen132
 \pgfmath@count=\count126
 \pgfmath@box=\box33
-\pgfmath@toks=\toks41
-\pgfmath@stack@operand=\toks42
-\pgfmath@stack@operation=\toks43
+\pgfmath@toks=\toks39
+\pgfmath@stack@operand=\toks40
+\pgfmath@stack@operation=\toks41
 )
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.
 tex
@@ -497,8 +492,8 @@ Package: pgffor 2019/04/04 v3.1.2 (3.1.2)
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex)
 \pgffor@iter=\dimen159
 \pgffor@skip=\dimen160
-\pgffor@stack=\toks44
-\pgffor@toks=\toks45
+\pgffor@stack=\toks42
+\pgffor@toks=\toks43
 ))
 (/usr/local/texlive/2019/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.cod
 e.tex
@@ -670,9 +665,9 @@ Package: geometry 2018/04/16 v5.8 Page Geometry
 \Gm@layoutheight=\dimen177
 \Gm@layouthoffset=\dimen178
 \Gm@layoutvoffset=\dimen179
-\Gm@dimlist=\toks46
+\Gm@dimlist=\toks44
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 33.
+Package hyperref Info: Option `colorlinks' set `true' on input line 32.
 
 (./stefan_tex.sty)
 (/usr/local/texlive/2019/texmf-dist/tex/latex/graphics/lscape.sty
@@ -733,20 +728,20 @@ Package: multicol 2018/12/27 v1.8v multicolumn formatting (FMi)
 (./factor_encoding.aux)
 \openout1 = `factor_encoding.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 71.
-LaTeX Font Info:    ... okay on input line 71.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 70.
+LaTeX Font Info:    ... okay on input line 70.
 
 (/usr/local/texlive/2019/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -755,12 +750,12 @@ LaTeX Font Info:    ... okay on input line 71.
 \scratchbox=\box69
 \nofMPsegments=\count165
 \nofMParguments=\count166
-\everyMPshowfont=\toks47
+\everyMPshowfont=\toks45
 \MPscratchCnt=\count167
 \MPscratchDim=\dimen190
 \MPnumerator=\count168
 \makeMPintoPDFobject=\count169
-\everyMPtoPDFconversion=\toks48
+\everyMPtoPDFconversion=\toks46
 ) (/usr/local/texlive/2019/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
 
@@ -785,7 +780,7 @@ Package caption Info: End \AtBeginDocument code.
 
 ABD: EveryShipout initializing macros
 \AtBeginShipoutBox=\box70
-Package hyperref Info: Link coloring ON on input line 71.
+Package hyperref Info: Link coloring ON on input line 70.
 
 (/usr/local/texlive/2019/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
@@ -795,9 +790,9 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
 \c@section@level=\count170
 )
-LaTeX Info: Redefining \ref on input line 71.
-LaTeX Info: Redefining \pageref on input line 71.
-LaTeX Info: Redefining \nameref on input line 71.
+LaTeX Info: Redefining \ref on input line 70.
+LaTeX Info: Redefining \pageref on input line 70.
+LaTeX Info: Redefining \nameref on input line 70.
 
 (./factor_encoding.out) (./factor_encoding.out)
 \@outlinefile=\write5
@@ -838,11 +833,11 @@ LaTeX Info: Redefining \nameref on input line 71.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Font Info:    Try loading font information for U+msa on input line 74.
+LaTeX Font Info:    Try loading font information for U+msa on input line 73.
 (/usr/local/texlive/2019/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 74.
+LaTeX Font Info:    Try loading font information for U+msb on input line 73.
 
 (/usr/local/texlive/2019/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
@@ -850,64 +845,60 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 {/usr/local/texlive/2019/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3]
  [4]
-<figures/means_encoding.pdf, id=215, 392.36388pt x 98.72935pt>
+<figures/means_encoding.pdf, id=219, 392.36388pt x 98.72935pt>
 File: figures/means_encoding.pdf Graphic file (type pdf)
 <use figures/means_encoding.pdf>
-Package pdftex.def Info: figures/means_encoding.pdf  used on input line 278.
+Package pdftex.def Info: figures/means_encoding.pdf  used on input line 277.
 (pdftex.def)             Requested size: 397.485pt x 100.02167pt.
  [5 <./figures/means_encoding.pdf>]
-<figures/means_intuition.pdf, id=333, 867.24pt x 361.35pt>
+<figures/means_intuition.pdf, id=347, 867.24pt x 361.35pt>
 File: figures/means_intuition.pdf Graphic file (type pdf)
 <use figures/means_intuition.pdf>
-Package pdftex.def Info: figures/means_intuition.pdf  used on input line 288.
+Package pdftex.def Info: figures/means_intuition.pdf  used on input line 289.
 (pdftex.def)             Requested size: 397.485pt x 165.62201pt.
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 309.
-<figures/lowrank_encoding.pdf, id=336, 561.17253pt x 116.84755pt>
+put line 310.
+<figures/lowrank_encoding.pdf, id=350, 561.17253pt x 116.84755pt>
 File: figures/lowrank_encoding.pdf Graphic file (type pdf)
 <use figures/lowrank_encoding.pdf>
-Package pdftex.def Info: figures/lowrank_encoding.pdf  used on input line 349.
+Package pdftex.def Info: figures/lowrank_encoding.pdf  used on input line 350.
 (pdftex.def)             Requested size: 397.485pt x 82.7662pt.
  [6 <./figures/means_intuition.pdf>] [7 <./figures/lowrank_encoding.pdf>] [8]
-<figures/mnl.pdf, id=537, 409.8994pt x 105.60052pt>
+<figures/mnl.pdf, id=548, 409.8994pt x 105.60052pt>
 File: figures/mnl.pdf Graphic file (type pdf)
 <use figures/mnl.pdf>
-Package pdftex.def Info: figures/mnl.pdf  used on input line 437.
+Package pdftex.def Info: figures/mnl.pdf  used on input line 438.
 (pdftex.def)             Requested size: 397.485pt x 102.40659pt.
  [9 <./figures/mnl.pdf>] [10]
-<figures/rf_final.png, id=688, 865.73438pt x 373.395pt>
+<figures/rf_final.png, id=698, 865.73438pt x 373.395pt>
 File: figures/rf_final.png Graphic file (type png)
 <use figures/rf_final.png>
-Package pdftex.def Info: figures/rf_final.png  used on input line 565.
+Package pdftex.def Info: figures/rf_final.png  used on input line 566.
 (pdftex.def)             Requested size: 397.485pt x 171.43903pt.
  [11 <./figures/rf_final.png>]
-<figures/xgb_final.png, id=701, 761.09344pt x 373.395pt>
+<figures/xgb_final.png, id=711, 761.09344pt x 373.395pt>
 File: figures/xgb_final.png Graphic file (type png)
 <use figures/xgb_final.png>
-Package pdftex.def Info: figures/xgb_final.png  used on input line 578.
+Package pdftex.def Info: figures/xgb_final.png  used on input line 579.
 (pdftex.def)             Requested size: 397.485pt x 195.00975pt.
  [12 <./figures/xgb_final.png>] [13] [14] [15
 
-] [16] [17]
-Underfull \hbox (badness 10000) in paragraph at lines 924--925
-
- []
-
-[18] (./factor_encoding.bbl [19]) [20]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 947.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 947.
+] [16] [17] [18]
+(./factor_encoding.bbl [19] [20]) [21]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 967.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 967.
  (./factor_encoding.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 947.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 947.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 967.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 967.
 Package rerunfilecheck Info: File `factor_encoding.out' has not changed.
-(rerunfilecheck)             Checksum: 2CB1F40A33039DC4096769D92F61AB1B;1330.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 947.
+(rerunfilecheck)             Checksum: CD9FDA1962678840EB92E95E625E8945;1406.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 967.
  ) 
 Here is how much of TeX's memory you used:
- 20396 strings out of 492616
- 369184 string characters out of 6129482
- 464637 words of memory out of 5000000
- 23802 multiletter control sequences out of 15000+600000
+ 20384 strings out of 492616
+ 368912 string characters out of 6129482
+ 463204 words of memory out of 5000000
+ 23789 multiletter control sequences out of 15000+600000
  14924 words of font info for 57 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  55i,19n,60p,1084b,888s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -941,10 +932,10 @@ s/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2019/texmf-dist/fonts
 /type1/public/amsfonts/cm/cmtt8.pfb></usr/local/texlive/2019/texmf-dist/fonts/t
 ype1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2019/texmf-dist/fon
 ts/type1/public/amsfonts/symbols/msbm7.pfb>
-Output written on factor_encoding.pdf (20 pages, 2697811 bytes).
+Output written on factor_encoding.pdf (21 pages, 2703020 bytes).
 PDF statistics:
- 944 PDF objects out of 1000 (max. 8388607)
- 788 compressed objects within 8 object streams
- 149 named destinations out of 1000 (max. 500000)
- 203 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 962 PDF objects out of 1000 (max. 8388607)
+ 803 compressed objects within 9 object streams
+ 153 named destinations out of 1000 (max. 500000)
+ 211 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -51,8 +51,8 @@
 \newlabel{sec:categorical_encoding}{{3}{5}{Categorical variable encoding methods}{section.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Means encoding}{5}{subsection.3.1}\protected@file@percent }
 \newlabel{subsec:means}{{3.1}{5}{Means encoding}{subsection.3.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Implementation example of the \emph  {means} encoding.\relax }}{5}{figure.caption.2}\protected@file@percent }
-\newlabel{fig:means_encoding}{{2}{5}{Implementation example of the \emph {means} encoding.\relax }{figure.caption.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Implementation example of the \emph  {means} encoding.\footnotemark \relax }}{5}{figure.caption.2}\protected@file@percent }
+\newlabel{fig:means_encoding}{{2}{5}{Implementation example of the \emph {means} encoding.\protect \footnotemark \relax }{figure.caption.2}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Intution for the \emph  {means} encoding on illustrative data. Here, categories $(A,B)$ and $(C,D)$ are associated with separate latent groups.\relax }}{6}{figure.caption.3}\protected@file@percent }
 \newlabel{fig:means_intuition}{{3}{6}{Intution for the \emph {means} encoding on illustrative data. Here, categories $(A,B)$ and $(C,D)$ are associated with separate latent groups.\relax }{figure.caption.3}{}}
 \newlabel{lemm:means}{{2}{6}{}{prop.2}{}}
@@ -63,7 +63,7 @@
 \citation{zou2006sparse}
 \citation{breiman2001random}
 \citation{chen2016xgboost}
-\newlabel{alg:means}{{\caption@xref {alg:means}{ on input line 308}}{7}{Means encoding}{equation.3.6}{}}
+\newlabel{alg:means}{{\caption@xref {alg:means}{ on input line 309}}{7}{Means encoding}{equation.3.6}{}}
 \@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Means Encoding Method\relax }}{7}{algorithm.1}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Implementation example of the \emph  {low-rank} encoding with singular value decomposition. Alternatively, we could also have used sparse PCA in place of SVD.\relax }}{7}{figure.caption.4}\protected@file@percent }
 \newlabel{fig:lowrank_encoding}{{4}{7}{Implementation example of the \emph {low-rank} encoding with singular value decomposition. Alternatively, we could also have used sparse PCA in place of SVD.\relax }{figure.caption.4}{}}
@@ -127,28 +127,29 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.1}Proof of Lemma \ref  {lemm:repr}}{15}{subsubsection.6.1.1}\protected@file@percent }
 \newlabel{proof:suff}{{6.1.1}{15}{Proof of Lemma \ref {lemm:repr}}{subsubsection.6.1.1}{}}
 \newlabel{eq:mu2}{{27}{15}{Proof of Lemma \ref {lemm:repr}}{equation.6.27}{}}
-\citation{venables2016codingmatrices}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.2}Proof of Lemma \ref  {lemm:means}}{16}{subsubsection.6.1.2}\protected@file@percent }
 \newlabel{proof:means}{{6.1.2}{16}{Proof of Lemma \ref {lemm:means}}{subsubsection.6.1.2}{}}
 \newlabel{eq:scalar_decomposition}{{31}{16}{Proof of Lemma \ref {lemm:means}}{equation.6.31}{}}
 \newlabel{eq:matrix_decomposition}{{32}{16}{Proof of Lemma \ref {lemm:means}}{equation.6.32}{}}
 \newlabel{eq:omega_inverse}{{33}{16}{Proof of Lemma \ref {lemm:means}}{equation.6.33}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.3}Proof of Lemma \ref  {lemm:mnl}}{16}{subsubsection.6.1.3}\protected@file@percent }
-\newlabel{proof:mnl}{{6.1.3}{16}{Proof of Lemma \ref {lemm:mnl}}{subsubsection.6.1.3}{}}
-\newlabel{eq:mnl_bayes}{{35}{16}{Proof of Lemma \ref {lemm:mnl}}{equation.6.35}{}}
-\newlabel{eq:mnl_logit}{{37}{16}{Proof of Lemma \ref {lemm:mnl}}{equation.6.37}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.3}Proof of Lemma \ref  {lemm:lowrank}}{16}{subsubsection.6.1.3}\protected@file@percent }
+\newlabel{proof:lowrank}{{6.1.3}{16}{Proof of Lemma \ref {lemm:lowrank}}{subsubsection.6.1.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.4}Proof of Lemma \ref  {lemm:mnl}}{16}{subsubsection.6.1.4}\protected@file@percent }
+\newlabel{proof:mnl}{{6.1.4}{16}{Proof of Lemma \ref {lemm:mnl}}{subsubsection.6.1.4}{}}
+\newlabel{eq:mnl_bayes}{{36}{16}{Proof of Lemma \ref {lemm:mnl}}{equation.6.36}{}}
+\newlabel{eq:mnl_logit}{{38}{16}{Proof of Lemma \ref {lemm:mnl}}{equation.6.38}{}}
+\citation{venables2016codingmatrices}
 \citation{murphy2012machine}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Additional Encoding Methods}{17}{subsection.6.2}\protected@file@percent }
 \newlabel{app:encodings}{{6.2}{17}{Additional Encoding Methods}{subsection.6.2}{}}
 \@writefile{toc}{\contentsline {paragraph}{One-hot or dummy}{17}{section*.17}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Deviation}{17}{section*.19}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Difference}{17}{section*.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Helmert}{17}{section*.23}\protected@file@percent }
-\citation{hastie2009elements}
+\@writefile{toc}{\contentsline {paragraph}{Helmert}{18}{section*.23}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Repeated Effect}{18}{section*.25}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Permutation}{18}{section*.27}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Multi-Permutation (Multi-Perm)}{18}{section*.29}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Fisher}{18}{section*.31}\protected@file@percent }
+\citation{hastie2009elements}
 \bibdata{references}
 \bibcite{angrist2008mostly}{{1}{2008}{{Angrist and Pischke}}{{}}}
 \bibcite{arkhangelsky2018role}{{2}{2018}{{Arkhangelsky and Imbens}}{{}}}
@@ -156,13 +157,14 @@
 \bibcite{bonhomme2015grouped}{{4}{2015}{{Bonhomme and Manresa}}{{}}}
 \bibcite{breiman2001random}{{5}{2001}{{Breiman}}{{}}}
 \bibcite{breiman1984classification}{{6}{1984}{{Breiman et~al.}}{{Breiman, Friedman, Stone, and Olshen}}}
+\@writefile{toc}{\contentsline {paragraph}{Fisher}{19}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Estimation details}{19}{subsection.6.3}\protected@file@percent }
+\newlabel{subsec:estim}{{6.3}{19}{Estimation details}{subsection.6.3}{}}
 \bibcite{cerda2018similarity}{{7}{2018}{{Cerda et~al.}}{{Cerda, Varoquaux, and K{\'e}gl}}}
 \bibcite{chen2016xgboost}{{8}{2016}{{Chen and Guestrin}}{{}}}
 \bibcite{de2011ames}{{9}{2011}{{De~Cock}}{{}}}
 \bibcite{diggle2002analysis}{{10}{2002}{{Diggle et~al.}}{{Diggle, Heagerty, Liang, and Zeger}}}
 \bibcite{farago1993strong}{{11}{1993}{{Farag{\'o} and Lugosi}}{{}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Estimation details}{19}{subsection.6.3}\protected@file@percent }
-\newlabel{subsec:estim}{{6.3}{19}{Estimation details}{subsection.6.3}{}}
 \bibcite{friedman2001greedy}{{12}{2001}{{Friedman}}{{}}}
 \bibcite{houseSalesKingCounty}{{13}{2016}{{harlfoxem}}{{}}}
 \bibcite{harrison1978hedonic}{{14}{1978}{{Harrison and Rubinfeld}}{{}}}

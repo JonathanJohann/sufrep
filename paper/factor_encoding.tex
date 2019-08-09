@@ -275,9 +275,11 @@ For our first method, we drop the categorical variables $G_{i}$ and substitute i
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/means_encoding.pdf}
-  \caption{Implementation example of the \emph{means} encoding.}
+  \caption{Implementation example of the \emph{means} encoding.\protect\footnotemark}
   \label{fig:means_encoding}
 \end{figure}
+
+\footnotetext{In Figure \ref{fig:means_intuition} and subsequent Figures \ref{fig:lowrank_encoding} and \ref{fig:mnl_encoding}, for easy interpretability, we show the $M x p$ matrix $\hOmega^T$. The reason being that the ultimate implementation of $\psi(g)$ in statistical software requires appending the group encoding to the row the original categorical variable corresponded to.}
 
 This representation is easily interpretable, and it is simple to implement efficiently. This method may be particularly applicable in instances where the number of regressors $p$ is small relative to the number of categories $p \ll |\gcal|$, since then the dimensionality reduction is more dramatic as compared to traditional encoding methods such as one-hot encoding.
 Figure \ref{fig:means_intuition} provides an intuitive explanation for why we should expect this to work: the group-wise averages of the continuous variables $(X_{1}, {X_{2}})$ may reveal the dominant latent group in each category.
@@ -380,7 +382,7 @@ is left-invertible. Then, the $k$-dimensional vectors $u(g) := U_{g,1:k}$ for  a
 
 \State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
 
-\State $U,D,V^T \gets SVD(\hOmega)$
+\State $U,D,V^T \gets SVD(\hOmega^T)$
 \Comment{Singular value decomposition}
 
 \State $S \gets 0_{n \times k}$
@@ -401,10 +403,10 @@ is left-invertible. Then, the $k$-dimensional vectors $u(g) := U_{g,1:k}$ for  a
 
 \State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
 
-\State $A, B \gets SPCA(\hOmega)$
+\State $A, B \gets SPCA(\hOmega^T)$
 \Comment{Sparse principal component analysis}
 
-\State $Z \gets M \cdot B_{\cdot,1:k}$
+\State $Z \gets \hOmega \cdot B_{\cdot,1:k}$
 \Comment{Projection on truncated principal components}
 
 \State $S \gets 0_{n \times k}$
@@ -777,11 +779,11 @@ Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega
 \subsubsection{Proof of Lemma \ref{lemm:lowrank}}
 
 \begin{proof} \label{proof:lowrank}
-  The proof is similar to the the previous one. However, this time note that we can decompose $\Omega = U D V^{T}$ using singular value decomposition, where the matrices have dimensions $|\mathcal{G}| \times |\mathcal{G}|$, $|G|\times p$, and $p \times p$ respectively. Letting $u(g) : g \mapsto (U)_{g, \cdot}^{T}$, we can write
+  The proof is similar to the the previous one. However, this time note that we can decompose the $\Omega^T = U D V^{T}$ using singular value decomposition, where the matrices have dimensions $|\mathcal{G}| \times |\mathcal{G}|$, $|G|\times p$, and $p \times p$ respectively. Letting $u(g) : g \mapsto (U)_{g, \cdot}$, we can write
   \begin{align}
-    \psi(g) = A^\dagger u(g)^{T} D V^{T}
+    \psi(g) = A^\dagger V D u(g)^T
   \end{align}
-  Note that $D$ and $V^{T}$ do not depend on the category $g$.
+  such that $D$ and $V$ do not depend on the category $g$. We also note that the singular value decomposition of the transpose of a matrix A is simply $V D^T U^T$ and thus $V D u(g)^T$ in the way we have defined it is equivalent to $(\Omega)_{\cdot, g}$.
 
 
 
