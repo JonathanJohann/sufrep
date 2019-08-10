@@ -275,9 +275,11 @@ For our first method, we drop the categorical variables $G_{i}$ and substitute i
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/means_encoding.pdf}
-  \caption{Implementation example of the \emph{means} encoding.}
+  \caption{Implementation example of the \emph{means} encoding.\protect\footnotemark}
   \label{fig:means_encoding}
 \end{figure}
+
+\footnotetext{In Figure \ref{fig:means_encoding} and subsequent Figures \ref{fig:lowrank_encoding} and \ref{fig:mnl_encoding}, for easy interpretability, we show the $M x p$ matrix $\hOmega^T$. The reason being that the ultimate implementation of $\psi(g)$ in statistical software requires appending the group encoding to the row the original categorical variable corresponded to.}
 
 This representation is easily interpretable, and it is simple to implement efficiently. This method may be particularly applicable in instances where the number of regressors $p$ is small relative to the number of categories $p \ll |\gcal|$, since then the dimensionality reduction is more dramatic as compared to traditional encoding methods such as one-hot encoding.
 Figure \ref{fig:means_intuition} provides an intuitive explanation for why we should expect this to work: the group-wise averages of the continuous variables $(X_{1}, {X_{2}})$ may reveal the dominant latent group in each category.
@@ -309,7 +311,7 @@ is left-invertible. Then, the $p$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \begin{algorithmic}[1]
 
   \Procedure{GroupAverages}{$X,G$}
-  \State $\hOmega \gets 0_{M \times p}$
+  \State $\hOmega \gets 0_{p \times M}$
   \Comment{Compute group-wise averages of continuous covariates}
   \For{$g$ in $1$:$M$}
 
@@ -342,7 +344,7 @@ is left-invertible. Then, the $p$-dimensional vectors $\omega(g) := \EE{X_{i} \c
 \subsection{Low-rank encodings}
 \label{subsec:lowrank}
 
-The \emph{means} encoding method may efficiently summarize the effect of the categorical variables if the continuous covariates are reasonably low-dimensional so that $p \ll M$. When $p$ is large, it might be beneficial to use a lower-dimensional representation of the conditional means. We suggest two  \emph{low-rank encoding methods}, both involving matrix factorization of our group-wise means matrix $\Omega$ of the continuous covariates where $(\Omega)_{jg} = E[X_{ij} | G=g]$.
+The \emph{means} encoding method may efficiently summarize the effect of the categorical variables if the continuous covariates are reasonably low-dimensional so that $p \ll M$. When $p$ is large, it might be beneficial to use a lower-dimensional representation of the conditional means. We suggest two  \emph{low-rank encoding methods}, both involving matrix factorization of the transpose of our group-wise means matrix $\Omega$ of the continuous covariates where $(\Omega)_{jg} = E[X_{ij} | G=g]$.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/lowrank_encoding.pdf}
@@ -350,9 +352,9 @@ The \emph{means} encoding method may efficiently summarize the effect of the cat
   \label{fig:lowrank_encoding}
 \end{figure}
 
-One alternative is to consider the factorization of the group-wise means matrix $\Omega$ using singular value decomposition $\Omega = U D V^{T}$. Then we can use the first $k$ columns of the $g^{th}$ row of the left-singular vector matrix $U$ as the representation for the $g^{th}$ category. Note that in practice, we will be working with the empirical counterpart $\hOmega$ and $k$ is in general unknown, so we recommend using cross-validation. Figure \ref{fig:lowrank_encoding} provides an illustration.
+One alternative is to consider the factorization of the transpose of our $p \times M$ group-wise means matrix $\Omega$ using singular value decomposition $\Omega^T = U D V^{T}$. Then we can use the first $k$ columns of the $g^{th}$ row of the left-singular vector matrix $U$ as the representation for the $g^{th}$ category. Note that in practice, we will be working with the empirical counterpart $\hOmega$ and $k$ is in general unknown, so we recommend using cross-validation. Figure \ref{fig:lowrank_encoding} provides an illustration.
 
-A second low-rank alternative is to use sparse principal component analysis (SPCA) method \cite{zou2006sparse} instead of SVD. As the name suggests, this method extends the original PCA algorithm by applying an elastic-net-style penalty on the coefficients of the loadings matrix. The result is that the matrix $\Omega$ is approximated by a sparse linear combination of vectors.\footnote{Formally, for a given matrix $M$, the sparse PCA method solves the problem \citep[~eq. 3.12]{zou2006sparse},
+A second low-rank alternative is to use sparse principal component analysis (SPCA) method \cite{zou2006sparse} instead of SVD. As the name suggests, this method extends the original PCA algorithm by applying an elastic-net-style penalty on the coefficients of the loadings matrix. The result is that the matrix $\Omega^T$ is approximated by a sparse linear combination of vectors.\footnote{Formally, for a given matrix $M$, the sparse PCA method solves the problem \citep[~eq. 3.12]{zou2006sparse},
 \begin{align}
     (\hat{A},\hat{B}) = \arg\min_{A,B} &\sum_{i=1}^n ||M_i - AB^TM_i||^2+ \lambda \sum_{j=1}^k ||B_{\cdot,j} ||_{2}^2 + \sum_{j=1}^k \lambda_{1,j} ||B_{\cdot,j}||_1\\
     \text{s.t.} \quad & A^TA = I_{k \times k}
@@ -368,7 +370,7 @@ Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that the matr
 is left-invertible. Then, the $k$-dimensional vectors $u(g) := U_{g,1:k}$ for  are sufficient representations of each category in the sense of \eqref{eq:repr}:
 \begin{equation}
 \label{eq:lowrank}
-  \mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger u(g)^{T} D V^{T})_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger u(g)^{T} D V^{T})_l}
+  \mu(x, \, g) = \frac{\sum_{l = 1}^k  \EE{Y_i \cond X_i = x, \, L_i = l} \PP{X_i = x \cond L_i = l} (A^\dagger V D  u(g)^{T})_l}{\sum_{l = 1}^k \PP{X_i = x \cond L_i = l} (A^\dagger V D  u(g)^{T})_l  }
 \end{equation}
 \end{lemm}
 
@@ -380,7 +382,7 @@ is left-invertible. Then, the $k$-dimensional vectors $u(g) := U_{g,1:k}$ for  a
 
 \State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
 
-\State $U,D,V^T \gets SVD(\hOmega)$
+\State $U,D,V^T \gets SVD(\hOmega^T)$
 \Comment{Singular value decomposition}
 
 \State $S \gets 0_{n \times k}$
@@ -401,10 +403,10 @@ is left-invertible. Then, the $k$-dimensional vectors $u(g) := U_{g,1:k}$ for  a
 
 \State $\hOmega \gets$ \textsc{GroupAverages}(X, G)
 
-\State $A, B \gets SPCA(\hOmega)$
+\State $A, B \gets SPCA(\hOmega^T)$
 \Comment{Sparse principal component analysis}
 
-\State $Z \gets M \cdot B_{\cdot,1:k}$
+\State $Z \gets \hOmega^T \cdot B_{\cdot,1:k}$
 \Comment{Projection on truncated principal components}
 
 \State $S \gets 0_{n \times k}$
@@ -777,11 +779,11 @@ Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega
 \subsubsection{Proof of Lemma \ref{lemm:lowrank}}
 
 \begin{proof} \label{proof:lowrank}
-  The proof is similar to the the previous one. However, this time note that we can decompose $\Omega = U D V^{T}$ using singular value decomposition, where the matrices have dimensions $|\mathcal{G}| \times |\mathcal{G}|$, $|G|\times p$, and $p \times p$ respectively. Letting $u(g) : g \mapsto (U)_{g, \cdot}^{T}$, we can write
+  The proof is similar to the the previous one. However, this time note that we can decompose the $\Omega^T = U D V^{T}$ using singular value decomposition, where the matrices have dimensions $|\mathcal{G}| \times |\mathcal{G}|$, $|G|\times p$, and $p \times p$ respectively. Letting $u(g) : g \mapsto (U)_{g, \cdot}$, we can write
   \begin{align}
-    \psi(g) = A^\dagger u(g)^{T} D V^{T}
+    \psi(g) = A^\dagger V D u(g)^T
   \end{align}
-  Note that $D$ and $V^{T}$ do not depend on the category $g$.
+  such that $D$ and $V$ do not depend on the category $g$. We also note that the singular value decomposition of the transpose of a matrix A is simply $V D^T U^T$ and thus $V D u(g)^T$ in the way we have defined it is equivalent to $(\Omega)_{\cdot, g}$.
 
 
 
