@@ -155,26 +155,31 @@ characteristics, e.g., severity of disease or socioeconomic resources, that both
 patient to self-select into different hospitals. Our main result is that, under this sufficient latent state
 assumption, practical representations of the form \eqref{eq:repr} exist and can be learned from data.
 
-The principle of representing high-cardinality categorical variables as real-valued vectors has played
-an important role in many different areas. For example, in natural language processing, it is now common
-to start more complex analyses with a pre-processing step that represent words as vectors that capture
-the way in which the words are used in context \citep{mikolov2013efficient,pennington2014glove}.
-Meanwhile, in the literature on panel data analysis, our approach is perhaps most closely related
-to a proposal of \citet{bonhomme2015grouped} where individual time series belong to discrete clusters and we
-have only one fixed effect per cluster (rather than one per time series). \citet{bonhomme2015grouped} then fit
-this model via a $k$-means like algorithm that alternates clustering and estimation with per-cluster fixed
-effects.\footnote{Our approach is not directly comparable to either of these methods, as we do not focus on
-textual data, and do not assume that the latent state $L_i$ can be consistently estimated (in contrast,
-\citet{bonhomme2015grouped} assume that they have access to long enough time series that their
-clustering step is consistent which, in our setting, would be equivalent to assuming that $L_i$ can be recovered).} Finally, in the causal inference literature, \cite{arkhangelsky2018role} state that simply accounting for group differences through additive fixed effects may not be sufficient to adjust for all relevant differences. They propose the use of group characteristics instead of linear fixed effects modeling and offer $(\overline{X}_{C_i},\overline{W}_{C_i})$ as a sufficient alternative where $\overline{X}_{C_i}$ is the average of the covariates per group $C_i$ and $\overline{W}_{C_i}$ is the average treatment probability per group $C_i$. This better addresses the lack of functional flexibility but works with a set of different assumptions unlike those we introduce in the sufficient latent state assumption \ref{lemm:repr}. The resulting framework provides a means for introducing lower dimensional, sufficient representations of categorical variables.
-
-
 Our paper is structured as follows. We begin by reviewing similar problem settings in the fixed effects literature and the drawbacks of using existing methods in \ref{subsec:related_work}. In Section 2, we introduce the primary lemma which seeks to describe the true information we wish to extract from categorical variables. In Section 3, we expand on lemma 1 to develop methods that utilize this insight. In Sections 4 and 5, we run simulated and observational experiments with our proposed methods and follow up with discussion on how realized performance compared to our expectations.
+
 
 \subsection{Related Work}
 \label{subsec:related_work}
 
-Traditionally, the discussion of how best to account for group membership $G_i$ in a non-parametric regression
+The principle of representing high-cardinality categorical variables as real-valued vectors has played an important role in many different areas. For example, in econometrics the categories often represent groups the individual observations belong to (such as a classroom cohorts or a region of the country) or are identified by (such as the individual identifier in longitudinal data).
+
+In the literature on panel data analysis, the approach we propose here is perhaps most closely related to the one presented in \citet{bonhomme2015grouped} where individual time series belong to discrete clusters and we have only one fixed effect per cluster (rather than one per time series). \citet{bonhomme2015grouped} then fit this model via a $k$-means like algorithm that alternates clustering and estimation with per-cluster fixed
+effects.\footnote{Our approach is not directly comparable to either of these methods, as we do not focus on textual data, and do not assume that the latent state $L_i$ can be consistently estimated (in contrast, \citet{bonhomme2015grouped} assume that they have access to long enough time series that their clustering step is consistent which, in our setting, would be equivalent to assuming that $L_i$ can be recovered).} Finally, \cite{arkhangelsky2018role} deal with misspecification using a propensity score-weighted estimator that uses nonlinear modeling and adjusts for group differences via group sufficient statistics. The combination of flexible conditional mean modeling and balancing methods yields a doubly-robust estimator of the treatment effect.
+
+In natural language processing, it is common
+to start more complex analyses with a pre-processing step that represent words as vectors that capture
+the way in which the words are used in context \citep{mikolov2013efficient,pennington2014glove}.
+Meanwhile, Recently \citet{cerda2018similarity} consider a related problem of representing ``dirty'' categorical
+variables that might arise if, e.g., several categorical levels are just misspellings of each other, and
+propose using a low-dimensional embedding that exploits lexicographic similarity (i.e., factors with
+similar spellings are arranged close to each other). In this paper, we use information in the $X_i$,
+rather than lexicographic information, to construct an embedding; however, the high-level conclusion
+that we can achieve meaningful gains by using auxiliary information to embed categorical variables in
+a low-rank space remains. Also, \citep{rahimi2008random} proposes randomly projecting a one-hot
+representation of the categorical variables into $\RR^k$ for relatively small $k$.
+
+
+In the broader machine learning literature the discussion of how best to account for group membership $G_i$ in a non-parametric regression
 has focused on different ways to encode $G_i$ that can be given as an input to
 statistical software. One simple way to do so is via one-hot encoding:
 \smash{$\iota: \gcal \rightarrow \{0, \, 1\}^M$} such that the $j$-th entry of \smash{$\iota(g)$}
@@ -182,11 +187,9 @@ is 1 if and only if $g$ corresponds to the $j$-th element in $\gcal$, and where 
 one-hot encoded features $(X_i, \, \iota(G_i))$ exactly recovers the standard fixed effects model
 \eqref{eq:FE}.
 
-As discussed above, however, one-hot encoding may lead to undesirably high-dimensional problems
-when $M := \abs{\gcal}$ is large.\footnote{Another slightly more subtle difficulty is that when the categorical
-variable has many levels, the individual features $\iota(G_i)_j$ become very sparse (i.e., they are usually
+As discussed above, however, one-hot encoding may lead to undesirably high-dimensional problems when $M := \abs{\gcal}$ is large.\footnote{Another slightly more subtle difficulty is that when the categorical variable has many levels, the individual features $\iota(G_i)_j$ become very sparse (i.e., they are usually
 0 and only very rarely 1). Many approaches to statistical learning work better with features whose
-variance roughly captures their range than with such spiky features.} In the Appendix (\ref{app:encodings}),
+variance roughly captures their range than with such spiky features.} In the  Appendix (\ref{app:encodings}),
 we present multiple encoding methods that similarly project the categories onto $\mathbb{R}^{M}$.
 These methods do not utilize information from the covariates $X_i$ or response $Y_i$ and suffer from the same pitfalls that
 come with high dimensional representation of the observed groups $\gcal$. The primary difference for
@@ -210,20 +213,6 @@ for \smash{$2^{M - 1} - 1$} potential splits. \citet{breiman1984classification} 
 we can optimize over this exponential set of potential splits in time that scales linearly in $M$;
 however, from a statistical point of view, such factorial splits are prone to very strong overfitting
 when the number of levels is large.
-
-Recently, \citet{cerda2018similarity} consider a related problem of representing ``dirty'' categorical
-variables that might arise if, e.g., several categorical levels are just misspellings of each other, and
-propose using a low-dimensional embedding that exploits lexicographic similarity (i.e., factors with
-similar spellings are arranged close to each other). In this paper, we use information in the $X_i$,
-rather than lexicographic information, to construct an embedding; however, the high-level conclusion
-that we can achieve meaningful gains by using auxiliary information to embed categorical variables in
-a low-rank space remains.
-
-We also note, it is sometimes possible to achieve strong results by randomly projecting a one-hot
-representation of the categorical variables into $\RR^k$ for relatively small $k$ \citep{rahimi2008random}. We also
-consider this approach but find that, at least in our experiments, we can achieve better
-performance using carefully crafted representations that leverage continuous covariates.
-
 
 
 
@@ -784,7 +773,7 @@ Since $\psi(g)$ only depends on $g$ through $\omega(g)$, it follows that $\omega
     \psi(g) = A^\dagger V D^T u(g)^T
   \end{align}
   where $D$ and $V$ do not depend on the category $g$ and $k$ is the true number of latent groups and column rank of $\Omega^T$. Finally, to complete the proof, we substitute $V D u(g)^T$ with $\omega(g)$ in \eqref{eq:omega_inverse}.
-  
+
   %We also note that the singular value decomposition of the transpose of a matrix A is simply $V D^T U^T$ and thus $V D u(g)^T$ in the way we have defined it is equivalent to $(\Omega)_{\cdot, g}$.
 
 
