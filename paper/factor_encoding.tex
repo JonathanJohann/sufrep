@@ -349,7 +349,7 @@ A second low-rank alternative is to use sparse principal component analysis (SPC
     \text{s.t.} \quad & A^TA = I_{k \times k}
     \label{eq:sparse_pca}
 \end{align}
-} This sort of sparsity can be advantageous for two reasons. First, sparse PCA creates principal component sparse vectors which can be potentially more interpretable. Second, if our universal estimator is a tree-based model such as random forest \cite{breiman2001random} or xgboost \cite{chen2016xgboost}, which fit to data by considering singular covariates at any point in the model, it may have difficulty taking advantage of dense principal components due to the rotation of the original covariate space. That is, if a tree would have a been able to produce a good split by using each variable separately, it may not be able to do the same if the variables are combined linearly. On the other hand, sparse PCA requires additional tuning of its regularization parameter $\lambda$ which can be done via cross-validation.
+} This sort of sparsity can be advantageous for two reasons. First, sparse PCA creates principal component sparse vectors which can be potentially more interpretable. Second, if our universal estimator is a tree-based model such as random forest \cite{breiman2001random} or xgboost \cite{chen2016xgboost}, which fit to data by considering singular covariates at any point in the model, it may have difficulty taking advantage of dense principal components due to the rotation of the original covariate space. That is, if a tree would have been able to produce a good split by using each variable separately, it may not be able to do the same if the variables are combined linearly. On the other hand, sparse PCA requires additional tuning of its regularization parameter $\lambda$ which can be done via cross-validation.
 
 Lemma \ref{lemm:lowrank} shows that if indeed there are only $k$ latent groups, then a representation that uses only the first $k$ columns of the left singular matrix or the first $k$ sparse principal components is indeed sufficient. As with the \emph{means} method, we rely on the universal consistency property of our estimator to learn a nonlinear mapping.
 
@@ -468,7 +468,7 @@ Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that $A$ in \
 % ----------- EXPERIMENTS --------------
 \section{Experiments}
 
-In the following section, we explore each method's effectiveness relative to one hot encoding across simulated and real world data sets. We apply two typically used methods random forests and xgboost.\footnote{Simulation code can be found at: \texttt{repo url}.}
+In the following section, we explore each method's effectiveness relative to one hot encoding across simulated and real world data sets. We apply two typically used methods: random forests and xgboost.\footnote{Simulation code can be found at: \texttt{repo url}.}
 
 \subsection{Simulations}
 \label{sec:simulations}
@@ -941,6 +941,7 @@ For the following five methods, we use information about the continuous covariat
 Below we provide additional details to better clarify how new methods related to Means were estimated and remove basic problems in the data that complicate training models.
 
 For PCA Means, we select the first $k$ principal components which generate 95\% of the variance in $X$, group by the unique categorical levels, and take the means of those principal components $z_{1:k}$. For SPCA Means, we use the default hyperparameters in the ``sparsepca" R package. %For IR-PCA Means, we create an 80-20 train-test split, apply PCA on the train set's probability output matrix and evaluate the performance of adding $p/2$ and $p/4$ principle components as opposed to the one hot encoding. From here, we choose the number of principle components with the lower mean squared error.
+
 
 In the Ames dataset, we remove the features ``PoolQC", ``GarageQual", and ``GarageYrBlt" due to almost being perfectly correlated with other features and remove the missing data rows as well. In the King County House Sales dataset, we remove the ID and date of the house sale as the covariates. Finally, in the Pakistan dataset, many of the covariates are almost perfectly correlated such as ``\% girls enrolled", ``\% boys enrolled", and ``gender parity score." As a result, we removed such covariates resulting in the following list of covariates: Education score, Toilet, Province, Population, School infrastructure score, Total number of schools, Primary Schools with single teacher, Primary Schools with single classroom, Pakistan Economic Growth, Number of secondary schools, Electricity, No Facility, City, Global Terrorism Index - Pakistan, Complete Primary Schools, Building condition satisfactory, Drone attacks in Pakistan, Drinking water, Boundary wall, Bomb Blasts Occurred, \% Complete Primary Schools, \% Boys Enrolled.
 
