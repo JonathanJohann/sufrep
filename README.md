@@ -17,12 +17,12 @@ n = 5000
 p = 20
 
 X <- matrix(rnorm(n*p),n,p)
-G <- sample(5,size=n,replace=TRUE)
-df <- data.frame(cbind(X,G))
+G <- as.factor(sample(5,size=n,replace=TRUE))
 
-enc <- make_encoder(X=df,G="G",method = "one_hot")
 
-train.df <- enc(df)
+enc <- make_encoder(X=X,G=G,method = "one_hot")
+
+train.df <- enc(X=X,G=G)
 print(head(train.df))
 ```
 
