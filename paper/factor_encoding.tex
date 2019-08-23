@@ -468,7 +468,7 @@ Under the conditions of Lemma \ref{lemm:repr}, suppose in addition that $A$ in \
 % ----------- EXPERIMENTS --------------
 \section{Experiments}
 
-In the following section, we explore each method's effectiveness relative to one hot encoding across simulated and real world data sets. We apply two typically used methods: random forests and xgboost.\footnote{Simulation code can be found at: \texttt{repo url}.}
+In the following section, we explore each method's effectiveness relative to one hot encoding across simulated and real world data sets. We apply two typically used methods: random forests and xgboost.\footnote{Simulation code can be found at: \texttt{https://github.com/grf-labs/sufrep}.}
 
 \subsection{Simulations}
 \label{sec:simulations}
@@ -582,7 +582,9 @@ We also evaluate these methods on publicly available datasets that are accessibl
 
 In \cite{pakistanEducation}, Hemani consolidated a series of surveys from Alif Ailaan, a nonprofit organization in Pakistan that focuses on improving education across the country. The objective of the surveys was to provide an objective means of comparing school systems across cities and provinces in order to spark competition between local governments to spur educational reform.
 
-The dataset used in the analysis below contains $n = 580$ and $504$ after removing null valued rows which can be broken down into $|\gcal| = 127$ cities from 2013 to 2016. The number of additional covariates $p$ is 20 and our estimation methodology is further elaborated on in Appendix \ref{subsec:estim}.
+The dataset used in the analysis below contains $n = 580$ and $504$ after removing null valued rows which can be broken down into $|\gcal| = 127$ cities from 2013 to 2016. The number of additional covariates $p$ is 20 and further data cleaning and preprocessing details are elaborated upon in the github.
+
+%our estimation methodology is further elaborated on in Appendix \ref{subsec:estim}.
 
 
 \paragraph{Ames Housing}
@@ -935,21 +937,6 @@ For a more in-depth treatment, see \cite{venables2016codingmatrices}. Note that 
 \vspace{.5em}
 
 For the following five methods, we use information about the continuous covariates to construct the mapping $\psi$.
-
-\subsection{Estimation details}\label{subsec:estim}
-
-Below we provide additional details to better clarify how new methods related to Means were estimated and remove basic problems in the data that complicate training models.
-
-For PCA Means, we select the first $k$ principal components which generate 95\% of the variance in $X$, group by the unique categorical levels, and take the means of those principal components $z_{1:k}$. For SPCA Means, we use the default hyperparameters in the ``sparsepca" R package. %For IR-PCA Means, we create an 80-20 train-test split, apply PCA on the train set's probability output matrix and evaluate the performance of adding $p/2$ and $p/4$ principle components as opposed to the one hot encoding. From here, we choose the number of principle components with the lower mean squared error.
-
-
-In the Ames dataset, we remove the features ``PoolQC", ``GarageQual", and ``GarageYrBlt" due to almost being perfectly correlated with other features and remove the missing data rows as well. In the King County House Sales dataset, we remove the ID and date of the house sale as the covariates. Finally, in the Pakistan dataset, many of the covariates are almost perfectly correlated such as ``\% girls enrolled", ``\% boys enrolled", and ``gender parity score." As a result, we removed such covariates resulting in the following list of covariates: Education score, Toilet, Province, Population, School infrastructure score, Total number of schools, Primary Schools with single teacher, Primary Schools with single classroom, Pakistan Economic Growth, Number of secondary schools, Electricity, No Facility, City, Global Terrorism Index - Pakistan, Complete Primary Schools, Building condition satisfactory, Drone attacks in Pakistan, Drinking water, Boundary wall, Bomb Blasts Occurred, \% Complete Primary Schools, \% Boys Enrolled.
-
-
-
-%  we run PCA and utilize an 80-20 train-test split on the training data to select either $\tfrac{1}{2} \cdot p$ or $\tfrac{1}{4} \cdot p$ principal components where $p$ is the number of covariates in $X_i$.
-
-%We remove all missing data rows which primarily existed in the Ames data set and select a subset of the input covariates for the Pakistan data set in order to reduce the number of perfectly correlated or almost perfectly correlated variables that frequently occurred in the data.
 
 \bibliography{references}
 \bibliographystyle{plainnat}
