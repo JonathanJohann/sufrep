@@ -114,8 +114,3 @@ create_data <- function(n, p, k, ngl, pl, type = "global") {
   data <- list(x = x, y = y, l = latent, alpha = alpha, g = g)
   data
 }
-
-
-
-
-

@@ -19,12 +19,12 @@ has_consistent_encoding <- function(X, G, X_enc) {
 }
 
 
-make_data <- function(n=200, p=4, m=6) {
+make_data <- function(n = 200, p = 4, m = 6) {
   cats <- apply(expand.grid(letters, letters), 1, function(s) paste0(s, collapse = ""))[1:m]
   G <- factor(sample(cats, replace = T, size = n))
   G_num <- as.integer(G)
   Y <- G_num + rnorm(n)
-  X <- apply(matrix(runif(n*p), n, p), 2, function(x) x + G_num)
+  X <- apply(matrix(runif(n * p), n, p), 2, function(x) x + G_num)
   list(X = X, G = G, Y = Y)
 }
 

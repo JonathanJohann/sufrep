@@ -8,8 +8,8 @@ df <- df %>%
   dplyr::select(-date) %>%
   dplyr::select(-id)
 df <- df %>%
-  mutate_at("zipcode",funs(as.factor)) %>%
-  mutate_at("zipcode",funs(as.integer))
+  mutate_at("zipcode", funs(as.factor)) %>%
+  mutate_at("zipcode", funs(as.integer))
 
 kingcounty <- data.frame(df)
 devtools::use_data(kingcounty)

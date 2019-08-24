@@ -1,5 +1,5 @@
 one_hot_encode <- function(num_categ) {
-  CM <- diag(num_categ)[,1:(num_categ-1)]
+  CM <- diag(num_categ)[, 1:(num_categ - 1)]
   return(CM)
 }
 
@@ -55,7 +55,7 @@ fisher_encode <- function(X, G, Y) {
 
 means_encode <- function(X, G) {
   p <- dim(X)[2]
-  CM <- as.matrix(aggregate(X, list(G), mean)[,2:(p + 1)])
+  CM <- as.matrix(aggregate(X, list(G), mean)[, 2:(p + 1)])
   colnames(CM) <- NULL
   return(CM)
 }
@@ -79,7 +79,7 @@ sparse_low_rank_encode <- function(X, G, num_components) {
   CM <- means_encode(X, G)
   decomp <- sparsepca::spca(CM, verbose = FALSE)
   U <- decomp$loadings[, 1:num_components]
-  CM <-  CM %*% U
+  CM <- CM %*% U
   return(CM)
 }
 
@@ -94,10 +94,9 @@ permutation_encode <- function(num_categ, num_perms) {
 
 
 mnl_encode <- function(X, G, num_folds) {
-
-  fit <- glmnet::glmnet(x=X,y=G,family="multinomial")
-  coefs <- coef(fit,s=min(fit$lambda,na.rm=TRUE))
-  coef_mat <- as.data.frame(lapply(coefs,as.matrix))
+  fit <- glmnet::glmnet(x = X, y = G, family = "multinomial")
+  coefs <- coef(fit, s = min(fit$lambda, na.rm = TRUE))
+  coef_mat <- as.data.frame(lapply(coefs, as.matrix))
   CM <- t(as.matrix(coef_mat))
   rownames(CM) <- NULL
   colnames(CM) <- NULL
@@ -171,7 +170,7 @@ make_encoder <- function(method, X, G,
     validate_G(G)
     print(dim(CM))
     # Augment original matrix
-    X_aug <- cbind(X, CM[as.integer(G),])
+    X_aug <- cbind(X, CM[as.integer(G), ])
 
     # Maintain X type
     if (is.data.frame(X)) {
@@ -188,43 +187,4 @@ make_encoder <- function(method, X, G,
   }
 
   return(encoding_fun)
-}
-
-
-
-#' @export
-get_xgboost_mse <- function(train,test,...){
-  train_Y <- as.tibble(train) %>% dplyr::pull(Y)
-  train_X <- as.tibble(train) %>% dplyr::select(-Y)
-  test_Y <- as.tibble(test) %>% dplyr::pull(Y)
-  test_X <- as.tibble(test) %>% dplyr::select(-Y)
-
-  xgb_grid_1 = expand.grid(nrounds = c(20,50,100),
-                           max_depth = c(3,6,9,12),
-                           colsample_bytree = c(0.5,0.7,0.9),
-                           eta = c(0.1,0.3,0.5),
-                           gamma=c(0,0.1),
-                           min_child_weight = c(1,5,10),
-                           subsample = c(0.5,0.75,1.0)
-  )
-
-  xgb_trcontrol_1 = trainControl(
-    method = "cv",
-    number = 3,
-    allowParallel = TRUE,
-    search="random"
-  )
-
-  xgb_train_1 = train(x=train_X,
-                      y=train_Y,
-                      trControl = xgb_trcontrol_1,
-                      tuneGrid = xgb_grid_1,
-                      method = "xgbTree",
-                      tuneLength = 30
-  )
-
-
-  predictions <- predict(xgb_train_1,test_X)
-  mse <- mean((test_Y-predictions)^2)
-  return(mse)
 }

@@ -34,9 +34,9 @@ test_that("create_data: covariates have different means depending on observable 
   x_mean_pred <- aggregate(data$x, list(data$g), mean)[, 2:(p + 1)]
   x_mean_true <- data$x_mean
   for (l in seq(k)) {
-    l_cat <- data$map[l,]  # categories associated with this latent group
-    l_xmean <- x_mean_true[l,] # average x for this latent group
-    diff <- apply(x_mean_pred[l_cat,], 1, function(x) x - l_xmean)
+    l_cat <- data$map[l, ] # categories associated with this latent group
+    l_xmean <- x_mean_true[l, ] # average x for this latent group
+    diff <- apply(x_mean_pred[l_cat, ], 1, function(x) x - l_xmean)
     expect_true(all(abs(diff) < 0.1))
   }
 })
@@ -68,5 +68,4 @@ test_that("create_data: variance of (intercept, x*b, noise) is roughly equal", {
   x <- data$x
   expect_true(abs(var(x %*% t(b)) - 1) < 0.2)
   expect_true(abs(var(x %*% t(b)) - 1) < 0.2)
-
 })
