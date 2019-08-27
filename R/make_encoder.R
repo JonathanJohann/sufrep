@@ -106,45 +106,97 @@ mnl_encode <- function(X, G) {
 
 
 validate_X <- function(X) {
-  if (!all(sapply(X, is.numeric))) {
-    stop("Argument X contains columns that are not numeric.")
+  if (length(dim(X)) != 2) {
+    stop("Argument X must be two-dimensional.")
+  }
+  non_numeric_cols <- rep(F, dim(X)[2])
+  for (i in seq_along(dim(X)[2])) {
+    non_numeric_cols[i] <- !is.numeric(X[, i])
+  }
+  if (any(non_numeric_cols)) {
+    stop(paste0(
+      "Argument X contains columns that are not numeric. ",
+      "They are numbered ", which(non_numeric_cols)
+    ))
   }
 }
 
 
 validate_G <- function(G) {
   if (!is.factor(G)) {
-    stop("Argument G must be factor.")
+    stop("Argument G must be of factor type.")
   }
 }
 
-validate_options <- function(method, Y, num_components, num_permutations, num_folds) {
-  if ((method != "fisher") && (!is.null(Y))) {
-    stop("Only method 'fisher' requires Y.")
+
+validate_Y <- function(method, Y) {
+  if ((method == "fisher") && is.null(Y)) {
+    stop("Method 'fisher' requires non-null Y.")
   }
-  if (!(method %in% c("low_rank", "sparse_low_rank")) && (!is.null(num_components))) {
-    stop("Only methods 'low_rank' and 'sparse_low_rank' requires num_components.")
-  }
-  if ((method != "multi_permutation") && (!is.null(num_permutations))) {
-    stop("Only method 'multi_permutation' requires num_permutations.")
-  }
-  # etc.
 }
 
 
-#' @export
+validate_levels <- function(G, input_levels) {
+  new_levels <- setdiff(levels(G), input_levels)
+  if (length(new_levels) > 0) {
+    stop(paste0("Training data did not contain levels: ", new_levels))
+  }
+}
+
+
+# Compute representations for categorical (factor) variables
+#
+#' @param method The encoding method.
+#'               Must be one of: "one_hot", "helmert", "deviation",
+#'               "repeated_effect", "difference", "simple_effect",
+#'               "fisher", "means", "low_rank", "sparse_low_rank",
+#'               "permutation", "multi_permutation", "mnl".
+#'               See REFERENCE.md for an explanation of each method.
+#' @param X A data.frame or matrix containing only numeric columns.
+#' @param G A single vector of factor type containing the categories.
+#' @param prefix A prefix to be prepended to encoding column names.
+#' @param Y A single vector of numerical type containing the outcome variable.
+#'          Used only in method "fisher", ignored otherwise.
+#' @param num_components If method is sparse_low_rank, this is the number
+#'                       of sparse principal components. If method is low_rank,
+#'                       then this corresponds to the number of singular vectors.
+#'                       For all other methods, this argument is ignored.
+#' @param num_permutations Number of columns to be added by the 'multi_permutation'
+#'                         method. Ignored by other methods.
+#' @param num_folds Number of cross-validation folds used by mnl method. Ignored by
+#'                  other methods.
+#' @examples
+#' \dontrun{
+#' # Fake data
+#' n <- 100
+#' p <- 10
+#' G <- factor(sample(c("a", "b", "c"), replace = T, size = n))
+#' X <- apply(matrix(runif(n * p), n, p))
+#'
+#' # Create the encoding matrix with the means method
+#' enc <- make_encoder("means", X = X, G = G)
+#'
+#' # Compute the actual encoded matrix
+#' X_enc <- enc(X, G)
+#' }
+#'
+#' @return A matrix or data.frame that concatenates the original X input columns with
+#'         the encoding columns.
+#'
+#' @references Jonathan Johannemann, Vitor Hadad, Susan Athey, and Stefan Wager.
+#'             "Sufficient Representations of Categorical Variables". 2019.
 make_encoder <- function(method, X, G,
-                         prefix = "E",
+                         prefix = "ENC",
                          Y = NULL,
-                         num_components = NULL,
-                         num_permutations = NULL) {
+                         num_components = dim(X)[2],
+                         num_permutations = 1,
+                         num_folds = 3) {
 
   # Type validation
   validate_X(X)
   validate_G(G)
-
-  # Argument validation
-  validate_options(method, Y, num_components, num_permutations, num_folds)
+  validate_Y(method, Y)
+  input_levels <- levels(G)
 
   # Compute encoding
   num_categ <- length(levels(G))
@@ -168,6 +220,7 @@ make_encoder <- function(method, X, G,
   encoding_fun <- function(X, G) {
     validate_X(X)
     validate_G(G)
+    validate_levels(G, input_levels)
 
     # Augment original matrix
     X_aug <- cbind(X, CM[as.integer(G), ])

@@ -2,86 +2,61 @@ library(sufrep)
 library(testthat)
 
 
-# Checks that all the encodings for one category are the same,
-#  regardless of the method used.
-has_consistent_encoding <- function(X, G, X_enc) {
-  G_num <- as.integer(G)
-  p <- dim(X)[2]
-  p_enc <- dim(X_enc)[2]
-  is_consistent <- sapply(unique(G_num), function(g) {
-    idx <- G_num == g
-    encoded <- X_enc[idx, (p + 1):p_enc, drop = F]
-    apply(encoded, 2, function(x) {
-      all(x == x[1])
-    })
-  })
-  all(is_consistent)
-}
-
-
-make_data <- function(n = 200, p = 4, m = 6) {
-  cats <- apply(expand.grid(letters, letters), 1, function(s) paste0(s, collapse = ""))[1:m]
-  G <- factor(sample(cats, replace = T, size = n))
-  G_num <- as.integer(G)
-  Y <- G_num + rnorm(n)
-  X <- apply(matrix(runif(n * p), n, p), 2, function(x) x + G_num)
-  list(X = X, G = G, Y = Y)
-}
-
-test_that("permutation encoding", {
-  data <- make_data()
-  X <- data$X
-  G <- data$G
-  enc <- make_encoder("permutation", X, G)
-  X_enc <- enc(X, G)
-  expect_true(has_consistent_encoding(X, G, X_enc))
-})
-
-test_that("multi_permutation encoding", {
-  data <- make_data()
-  X <- data$X
-  G <- data$G
-  enc <- make_encoder("multi_permutation", X, G, num_permutations = 11)
-  X_enc <- enc(X, G)
-  expect_true(has_consistent_encoding(X, G, X_enc))
+test_that("all encoders have consistent encoding", {
+  for (method in methods) {
+    enc <- make_encoder(method, X, G, Y = Y)
+    X_enc <- enc(X, G)
+    expect_true(has_consistent_encoding(X, G, X_enc))
+  }
 })
 
 
-test_that("means encoding", {
-  data <- make_data()
-  X <- data$X
-  G <- data$G
-  enc <- make_encoder("means", X, G)
-  X_enc <- enc(X, G)
-  expect_true(has_consistent_encoding(X, G, X_enc))
+test_that("classical encodings have same R-squared", {
+  rsquared <- rep(0, length(classical_methods))
+  for (i in seq_along(classical_methods)) {
+    method <- classical_methods[i]
+    enc <- make_encoder(method, X, G)
+    X_enc <- enc(X, G)
+    ols <- lm(Y ~ X_enc)
+    rsquared[i] <- summary(ols)$r.squared
+    expect_equal(rsquared[1], rsquared[i], tol = 1e-5)
+  }
 })
 
 
-test_that("low_rank encoding", {
-  data <- make_data()
-  X <- data$X
-  G <- data$G
-  enc <- make_encoder("low_rank", X, G, num_components = 3)
+test_that("means encoding correctly takes means", {
+  enc <- make_encoder(method = "means", X, G)
   X_enc <- enc(X, G)
-  expect_true(has_consistent_encoding(X, G, X_enc))
+  G_levels <- unique(G)
+  for (g in seq_along(G_levels)) {
+    idx <- G == g
+    G_mean1 <- apply(X_enc[idx, (p + 1):dim(X_enc)[2], drop = F], 2, mean)
+    G_mean2 <- apply(X[idx, ], 2, mean)
+    expect_equal(G_mean1, G_mean2, tol = 1e-8)
+  }
 })
 
 
-test_that("sparse_low_rank encoding", {
-  data <- make_data()
-  X <- data$X
-  G <- data$G
-  enc <- make_encoder("sparse_low_rank", X, G, num_components = 3)
-  X_enc <- enc(X, G)
-  expect_true(has_consistent_encoding(X, G, X_enc))
+test_that("low rank encodings have correct number of columns", {
+  for (method in c("low_rank", "sparse_low_rank")) {
+    for (q in seq(p)) {
+      X_enc <- make_encoder(method = method, X, G, num_components = q)(X, G)
+      expect_equal(dim(X_enc)[2], p + q)
+    }
+  }
 })
 
 
-test_that("mnl encoding", {
-  data <- make_data()
-  X <- data$X
-  G <- data$G
-  enc <- make_encoder("mnl", X, G)
-  X_enc <- enc(X, G)
-  expect_true(has_consistent_encoding(X, G, X_enc))
+test_that("low rank encodings break if number of components is too large", {
+  for (method in c("low_rank", "sparse_low_rank")) {
+    expect_error(make_encoder(method = method, X, G, num_components = p + 1))
+  }
+})
+
+
+test_that("multi_permutation method has correct number of columns", {
+  for (q in seq(p)) {
+    X_enc <- make_encoder(method = "multi_permutation", X, G, num_permutations = q)(X, G)
+    expect_equal(dim(X_enc)[2], p + q)
+  }
 })
