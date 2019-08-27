@@ -111,11 +111,13 @@ validate_X <- function(X) {
   }
   non_numeric_cols <- rep(F, dim(X)[2])
   for (i in seq_along(dim(X)[2])) {
-    non_numeric_cols[i] <- !is.numeric(X[,i])
+    non_numeric_cols[i] <- !is.numeric(X[, i])
   }
   if (any(non_numeric_cols)) {
-    stop(paste0("Argument X contains columns that are not numeric. ",
-                "They are numbered ", which(non_numeric_cols)))
+    stop(paste0(
+      "Argument X contains columns that are not numeric. ",
+      "They are numbered ", which(non_numeric_cols)
+    ))
   }
 }
 
@@ -171,10 +173,10 @@ validate_levels <- function(G, input_levels) {
 #' G <- factor(sample(c("a", "b", "c"), replace = T, size = n))
 #' X <- apply(matrix(runif(n * p), n, p))
 #'
-#' Create the encoding matrix with the 'means' method
-#' enc <- make_encoder("means", X=X, G=G)
+#' # Create the encoding matrix with the means method
+#' enc <- make_encoder("means", X = X, G = G)
 #'
-#' Compute the actual encoded matrix
+#' # Compute the actual encoded matrix
 #' X_enc <- enc(X, G)
 #' }
 #'
