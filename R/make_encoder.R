@@ -41,7 +41,7 @@ simple_effect_encode <- function(num_categ) {
   return(CM)
 }
 
-fisher_encode <- function(X, G, Y) {
+fisher_encode <- function(G, Y) {
   CM <- aggregate(Y, list(G), mean)
   colnames(CM) <- c("label", "X1")
   CM$X1 <- rank(CM$X1)
@@ -93,8 +93,9 @@ permutation_encode <- function(num_categ, num_perms) {
 }
 
 
-mnl_encode <- function(X, G, num_folds) {
-  fit <- glmnet::glmnet(x = as.matrix(X), y = G, family = "multinomial")
+mnl_encode <- function(X, G) {
+  X <- as.matrix(X)
+  fit <- glmnet::glmnet(x = X, y = G, family = "multinomial")
   coefs <- coef(fit, s = min(fit$lambda, na.rm = TRUE))
   coef_mat <- as.data.frame(lapply(coefs, as.matrix))
   CM <- t(as.matrix(coef_mat))
@@ -204,13 +205,13 @@ make_encoder <- function(method, X, G,
     repeated_effect = repeated_effect_encode(num_categ),
     difference = difference_encode(num_categ),
     simple_effect = simple_effect_encode(num_categ),
-    fisher = fisher_encode(X, G, Y),
+    fisher = fisher_encode(G, Y),
     means = means_encode(X, G),
     low_rank = low_rank_encode(X, G, num_components),
     sparse_low_rank = sparse_low_rank_encode(X, G, num_components),
     permutation = permutation_encode(num_categ, 1),
     multi_permutation = permutation_encode(num_categ, num_permutations),
-    mnl = mnl_encode(X, G, num_folds)
+    mnl = mnl_encode(X, G)
   )
 
   # Create encoding function
