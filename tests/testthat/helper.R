@@ -16,3 +16,10 @@ make_data <- function(n = 200, p = 4, m = 6) {
   X <- apply(matrix(runif(n * p), n, p), 2, function(x) x + G_num)
   list(X = X, G = G, Y = Y)
 }
+
+n <- 200
+p <- 5
+data <- make_data(n = n, p = p)
+X <- data$X
+G <- data$G
+Y <- data$Y
