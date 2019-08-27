@@ -1,19 +1,25 @@
 evaluate <- function(train, test,
                      categorical, response,
                      method = "one_hot",
-                     model = "regression_forest", ...) {
+                     model = "regression_forest", num_permutations = NULL,num_components = NULL,Y = NULL) {
   remove_response <- which(colnames(train) %in% c(response))
 
   if (method %in% c("fisher")) {
     train.X <- train
+    Y <- train.X[,response]
+  } else if(method %in% c("multi_permutation")){
+    train.X <- train[,-remove_response]
+    if(is.null(num_permutations)){
+      num_permutations <- ncol(train.X)
+    }
   } else {
     train.X <- train[, -remove_response]
+    response <- NULL
   }
 
-
-  enc <- make_encoder(X = train.X, G = categorical, method = method, ...)
-  train <- enc(train)
-  test <- enc(test)
+  enc <- make_encoder(X = train.X[,-which(colnames(train.X) %in% c(categorical))], G = as.factor(train.X[,categorical]), method = method, num_permutations=num_permutations,num_components=num_components,Y=Y)
+  train <- enc(X=train[,-which(colnames(train) %in% c(categorical))],G=as.factor(train[,categorical]))
+  test <- enc(X=test[,-which(colnames(test) %in% c(categorical))],G=as.factor(test[,categorical]))
 
 
   if (model == "regression_forest") {
@@ -31,7 +37,7 @@ evaluate_method <- function(df, categorical, response, k = 10, model = "regressi
   randomized_df <- df[sample(nrow(df)), ]
   methods <- c(
     "one_hot", "multi_permutation", "means", "low_rank",
-    "sparse_low_rank", "MNL", "permutation", "difference",
+    "sparse_low_rank", "mnl", "permutation", "difference",
     "deviation", "repeated_effect", "helmert", "fisher",
     "simple_effect"
   )
@@ -49,6 +55,7 @@ evaluate_method <- function(df, categorical, response, k = 10, model = "regressi
     trainData <- randomized_df[-testIndexes, ]
     mses <- c()
     for (q in 1:13) {
+      print(paste0("STARTING ",methods[q]))
       if (methods[q] %in% c("low_rank", "sparse_low_rank")) {
         cv_vals <- c(5, 10, 15)
         folds <- 3
@@ -64,11 +71,11 @@ evaluate_method <- function(df, categorical, response, k = 10, model = "regressi
             testData2 <- randomized_df2[testIndexes2, ]
             trainData2 <- randomized_df2[-testIndexes2, ]
 
-            train.X2 <- trainData2[, -which(colnames(trainData2) %in% c(response))]
-            enc <- make_encoder(X = train.X2, G = categorical, num_components = cv_vals[ii], model = model)
+            train.X2 <- trainData2[, -which(colnames(trainData2) %in% c(categorical,response))]
+            enc <- make_encoder(method = methods[q],X = train.X2, G = as.factor(trainData2[,categorical]), num_components = cv_vals[ii])
 
-            trainData2 <- enc(trainData2)
-            testData2 <- enc(testData2)
+            trainData2 <- enc(X=trainData2,G=as.factor(trainData2[,categorical]))
+            testData2 <- enc(X=testData2,G=as.factor(testData2[,categorical]))
             if (model == "regression_forest") {
               cv_mse <- c(mse, get_forest_mse(trainData2, testData2))
             }
@@ -83,15 +90,24 @@ evaluate_method <- function(df, categorical, response, k = 10, model = "regressi
         mse <- evaluate(
           method = methods[q], train = trainData, test = testData,
           categorical = categorical, response = response,
-          model = model, Y = response, num_components = num_components
+          model = model, Y = NULL, num_components = num_components
         )
       }
       else {
-        mse <- evaluate(
-          method = methods[q], train = trainData, test = testData,
-          categorical = categorical, response = response,
-          model = model, Y = response
-        )
+        if(methods[q] %in% c("fisher")){
+          mse <- evaluate(
+            method = methods[q], train = trainData, test = testData,
+            categorical = categorical, response = response,
+            model = model, Y = response
+          )
+        } else{
+          mse <- evaluate(
+            method = methods[q], train = trainData, test = testData,
+            categorical = categorical, response = response,
+            model = model, Y = NULL
+          )
+        }
+
       }
 
       print(mse)

@@ -4,6 +4,9 @@ library(caret)
 library(glmnet)
 library(xgboost)
 library(tidyverse)
+library(here)
+
+source(here::here("/scripts/simulations/create_data.R"))
 
 time_seed <- function() {
   as.integer((as.numeric(Sys.time()) * 1e+07) %% 1e+07)
@@ -87,8 +90,8 @@ for (i in seq(1)) {
       enc_method <- make_encoder(method, X = train$x, G = train$g, num_components = which.min(cv_mses))
       x_enc <- enc_method(train$x, train$g)
       x_test_enc <- enc_method(test$x, test$g)
-    } else if (method %in% c("mnl")) {
-      enc_method <- make_encoder(method, X = train$x, G = train$g)
+    } else if (method %in% c("fisher")) {
+      enc_method <- make_encoder(method, X = train$x, G = train$g,Y = train$y)
       x_enc <- enc_method(train$x, train$g)
       x_test_enc <- enc_method(test$x, test$g)
     }
