@@ -25,4 +25,4 @@ test <- data.frame(sim_data$TEST %>% dplyr::mutate_at("A", fix_factors))
 mse <- evaluate(method = "one_hot", train = train, test = test, categorical = "A", response = "Y", model = model)
 ```
 
-In linear.R and interactions.R, we have code that runs each encoding method for a set of parameters and seed.
+In evaluation.R, we have code that runs each encoding method for a set of parameters and seed.

@@ -91,7 +91,7 @@ for (i in seq(1)) {
       x_enc <- enc_method(train$x, train$g)
       x_test_enc <- enc_method(test$x, test$g)
     } else if (method %in% c("fisher")) {
-      enc_method <- make_encoder(method, X = train$x, G = train$g,Y=train$y)
+      enc_method <- make_encoder(method, X = train$x, G = train$g,Y = train$y)
       x_enc <- enc_method(train$x, train$g)
       x_test_enc <- enc_method(test$x, test$g)
     }

@@ -96,7 +96,6 @@ permutation_encode <- function(num_categ, num_perms) {
 mnl_encode <- function(X, G) {
   X <- as.matrix(X)
   fit <- glmnet::glmnet(x = X, y = G, family = "multinomial")
-  print(min(fit$lambda,na.rm=TRUE))
   coefs <- coef(fit, s = min(fit$lambda, na.rm = TRUE))
   coef_mat <- as.data.frame(lapply(coefs, as.matrix))
   CM <- t(as.matrix(coef_mat))

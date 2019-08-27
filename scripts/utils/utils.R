@@ -1,13 +1,12 @@
 evaluate <- function(train, test,
                      categorical, response,
                      method = "one_hot",
-                     model = "regression_forest", num_permutations=NULL,num_components=NULL,Y=NULL) {
+                     model = "regression_forest", num_permutations = NULL,num_components = NULL,Y = NULL) {
   remove_response <- which(colnames(train) %in% c(response))
 
   if (method %in% c("fisher")) {
     train.X <- train
     Y <- train.X[,response]
-
   } else if(method %in% c("multi_permutation")){
     train.X <- train[,-remove_response]
     if(is.null(num_permutations)){
@@ -17,8 +16,8 @@ evaluate <- function(train, test,
     train.X <- train[, -remove_response]
     response <- NULL
   }
-  cat.index <- which(colnames(train.X) %in% c(categorical))
-  enc <- make_encoder(X = train.X[,-cat.index], G = as.factor(train.X[,cat.index]), method = method, num_permutations=num_permutations,num_components=num_components,Y=Y)
+
+  enc <- make_encoder(X = train.X[,-which(colnames(train.X) %in% c(categorical))], G = as.factor(train.X[,categorical]), method = method, num_permutations=num_permutations,num_components=num_components,Y=Y)
   train <- enc(X=train[,-which(colnames(train) %in% c(categorical))],G=as.factor(train[,categorical]))
   test <- enc(X=test[,-which(colnames(test) %in% c(categorical))],G=as.factor(test[,categorical]))
 
