@@ -1,11 +1,12 @@
 # Experiments
 
-To run the following scripts, a user would require the following additional packages:
--\texttt{here}
--\texttt{xgboost}
--\texttt{grf}
--\texttt{tidyverse}
--\texttt{glmnet}
--\texttt{sparsepca}
+To run our replication scripts, please make sure the following additional packages are installed.
+
+```
+here
+xgboost
+grf
+dplyr
+```
 
 All packages are available on CRAN.
